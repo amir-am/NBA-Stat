@@ -341,7 +341,7 @@ def build(rows, sched, season, now):
             games=[dict(d=x["date"], o=x["opp"], h=x["home"], m=round(x["min"]), p=x["pts"], r=x["reb"],
                         a=x["ast"], pra=x["pra"]) for x in g[-15:]]))
     P.sort(key=lambda p: -p["avg"])
-    return {"season": season, "updated": now.strftime("%Y-%m-%d %H:%M UTC"), "players": P[:200], "teams": teams,
+    return {"season": season, "updated": now.strftime("%Y-%m-%d %H:%M UTC"), "players": P[:500], "teams": teams,
             "through": max((x["date"] for x in R), default=None)}
 
 
