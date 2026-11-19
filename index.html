@@ -54,7 +54,7 @@ const bars=G.map((x,i)=>`<rect x="${i*bw+2}" y="${H-x.pra/mx*H}" width="${bw-4}"
 const ly=isNaN(l)?'':`<line x1="0" x2="${W}" y1="${H-l/mx*H}" y2="${H-l/mx*H}" stroke="#e33" stroke-width="2"/>`;
 $('o').innerHTML=`<p><b>${p.name}</b> (${p.team}) <button onclick="$('o').style.display='none'">Close</button></p><svg viewBox="0 0 ${W} ${H}" width="100%">${bars}${ly}</svg><div class="mu">Last 15 games, oldest to newest${isNaN(l)?'':'; red line = '+l}</div><table><tr><th>Date</th><th>Opp</th><th>H/A</th><th>Min</th><th>PTS</th><th>REB</th><th>AST</th><th>PRA</th></tr>`+
 [...G].reverse().map(x=>`<tr><td>${x.d.slice(5)}</td><td>${x.o}</td><td>${x.h?'H':'A'}</td><td>${x.m}</td><td>${x.p}</td><td>${x.r}</td><td>${x.a}</td><td><b>${x.pra}</b></td></tr>`).join('')+'</table>';$('o').style.display='block'}
-fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('h').textContent='NBA PRA '+d.season;$('u').textContent='Updated '+d.updated;
+fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('h').textContent='NBA PRA '+d.season;$('u').textContent='Updated '+d.updated+(d.through?' · games through '+d.through:'');
 [...new Set(d.players.map(p=>p.team))].sort().forEach(t=>$('tm').add(new Option(t,t)));
 ['tp','mg','q','tm'].forEach(i=>$(i).addEventListener('input',draw));draw()}).catch(e=>{$('u').textContent='No data yet ('+e+')'});
 </script></body></html>
