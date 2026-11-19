@@ -58,6 +58,7 @@ tr:last-child td{border-bottom:0}
 const $=i=>document.getElementById(i);
 let D,T,S={k:4,d:-1},L={};
 try{L=JSON.parse(localStorage.getItem('lines')||'{}')}catch(e){}
+const et=s=>{try{const d=new Date(s.replace(' UTC','Z').replace(' ','T'));return d.toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET'}catch(e){return s}};
 const f=(x,n=1)=>x==null?'–':(+x).toFixed(n);
 const hue=s=>[...s].reduce((a,c)=>a*31+c.charCodeAt(0),7)%360;
 const pc=(a,l)=>{const c=a.filter(v=>v>l).length,n=a.length,p=Math.round(100*c/n);return`<span class="pc ${p>=60?'up':p<=40?'dn':''}">${p}% <small>${c}/${n}</small></span>`};
@@ -114,7 +115,7 @@ I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</
 <div class="hh">Keep in mind</div><div class="hp" style="--c:var(--dn)"><span>These are past results, not predictions. Sportsbooks already price in most of this. Early in the season the samples are small. At typical odds of -110 you need to win about 52.4% of bets just to break even, so a 55% hit rate over 10 games is not a proven edge. Only bet what you can afford to lose.</span></div></div>`;
 $('o').style.display='flex'}
 fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('se').textContent='NBA regular season '+d.season;
-$('ch').innerHTML=`<span>Updated ${d.updated}</span>`+(d.through?`<span>Games through ${d.through}</span>`:'');
+$('ch').innerHTML=`<span>Updated ${et(d.updated)}</span>`+(d.through?`<span>Games through ${d.through}</span>`:'');
 [...new Set(d.players.map(p=>p.team))].sort().forEach(t=>$('tm').add(new Option(t,t)));
 ['tp','mg','q','tm'].forEach(i=>$(i).addEventListener('input',draw));draw()}).catch(e=>{$('se').textContent='No data yet ('+e+')'});
 </script></body></html>
