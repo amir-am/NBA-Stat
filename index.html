@@ -44,8 +44,11 @@ tr:last-child td{border-bottom:0}
 .g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
 .tl{background:var(--card);border-radius:14px;padding:9px 11px;border-left:4px solid var(--c)}.tl div:first-child{color:var(--mu);font-size:12px}.tl div:last-child{font-weight:700;font-size:16px}
 .sh table{width:100%;background:var(--card);border-radius:14px}.sh th,.sh td{text-align:center;padding:8px 4px;background:none;position:static;border-bottom:1px solid var(--bd)}.sh th{color:var(--mu);border-bottom:1px solid var(--bd)}
+.hb{margin:-4px 0 14px;font:inherit;font-weight:700;font-size:13px;color:#3b1d8f;background:#fff;border:0;border-radius:99px;padding:7px 14px}
+.hp{background:var(--card);border-left:4px solid var(--c);border-radius:14px;padding:10px 12px;margin-bottom:8px}.hp b{display:block;margin-bottom:2px}.hp span{color:var(--mu);font-size:13.5px}
+.hp i{font-style:normal;font-weight:700}.hh{font-weight:800;font-size:17px;margin:14px 2px 8px}
 </style></head><body>
-<div class="hero"><h1>PRA Props</h1><div class="sea" id="se">Loading…</div><div class="chips" id="ch"></div><input id="q" placeholder="Search a player"></div>
+<div class="hero"><h1>PRA Props</h1><div class="sea" id="se">Loading…</div><div class="chips" id="ch"></div><button class="hb" onclick="help()">How to read this</button><input id="q" placeholder="Search a player"></div>
 <div class="bar"><select id="tm"><option value="">All teams</option></select>
 <label>Top <input id="tp" type="number" value="100"></label><label>Min games <input id="mg" type="number" value="10"></label></div>
 <div class="panel"><div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div></div>
@@ -96,6 +99,19 @@ $('sh').innerHTML=`<div class="hd"><div><b>${p.name}</b><div style="opacity:.9">
 <svg viewBox="0 0 ${W} ${H}" width="100%">${bars}${ly}</svg><div class="mu" style="margin:4px 0 12px">Last ${G.length} games, oldest to newest${has?'. Dashed line is your line, '+l:''}</div>
 <table><tr><th>Date</th><th>Opp</th><th>Min</th><th>PTS</th><th>REB</th><th>AST</th><th>PRA</th></tr>`+
 [...G].reverse().map(x=>`<tr><td>${x.d.slice(5)}</td><td>${x.h?'vs':'@'} ${x.o}</td><td>${x.m}</td><td>${x.p}</td><td>${x.r}</td><td>${x.a}</td><td><b>${x.pra}</b></td></tr>`).join('')+'</table></div>';
+$('o').style.display='flex'}
+function help(){
+const I=[['--t','Line, Over, Over L10','Type the sportsbook line (for example 38.5). <i>Over</i> shows how often the player went over it this season, and <i>Over L10</i> how often in the last 10 games. 60% / 6 of 10 means he cleared that line in 6 of his last 10 games. Green is 60% or more, red is 40% or less.'],
+['--l','Floor 90, 80, 70','The PRA a player reached or beat in at least 90%, 80% or 70% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
+['--a','Avg and Median','Avg is the mean PRA. Median is the middle game. If Avg is well above Median, a few huge games are pulling it up, so the Median is the more typical night.'],
+['--f','L5, L10 and Last 10 bars','L5 and L10 are his average over the last 5 and 10 games. L5 is a green badge when he is running 15% or more above his season average (hot) and red when 15% or more below (cold). The small bars show each of the last 10 games: green at or above his average, red below, dashed line is the average.'],
+['--m','Minutes','More minutes usually means more PRA. Tap a name to see his last 5 minutes. If they dropped, the recent numbers may overstate what he will do.'],
+['--m','Next and Opp allowed','Next is his next game (vs is home, @ is away). Opp allowed is how many PRA that team gives up per game to all opposing players, with its rank. #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
+['--a','Details (tap a name)','Std dev tells how swingy he is: higher means less predictable. Also home and away averages, back-to-back and rested averages (n/a if fewer than 5 games), and his last 15 games with your line on the chart.']];
+$('sh').innerHTML=`<div class="hd"><div><b>How to read this</b><div style="opacity:.9">Past stats, step by step</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">`+
+I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</span></div>`).join('')+
+`<div class="hh">A quick routine</div><div class="hp" style="--c:var(--up)"><span>1. Type the line. 2. Check Over and Over L10. 3. Compare the line with his floors. 4. Check form (L5, bars) and minutes. 5. Check the opponent rank. 6. Check injury and lineup news elsewhere, because this page does not have it and it often matters most.</span></div>
+<div class="hh">Keep in mind</div><div class="hp" style="--c:var(--dn)"><span>These are past results, not predictions. Sportsbooks already price in most of this. Early in the season the samples are small. At typical odds of -110 you need to win about 52.4% of bets just to break even, so a 55% hit rate over 10 games is not a proven edge. Only bet what you can afford to lose.</span></div></div>`;
 $('o').style.display='flex'}
 fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('se').textContent='NBA regular season '+d.season;
 $('ch').innerHTML=`<span>Updated ${d.updated}</span>`+(d.through?`<span>Games through ${d.through}</span>`:'');
