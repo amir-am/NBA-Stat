@@ -1,68 +1,83 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0e1013">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#3b1d8f">
 <title>PRA Props</title>
 <style>
-:root{color-scheme:light dark;--bg:#f5f6f8;--card:#fff;--fg:#14161a;--mu:#7b8190;--bd:#e7e9ee;--ac:#4f46e5;--up:#0f9d58;--dn:#d93025;--upb:#e3f6ea;--dnb:#fde8e6;--sub:#f0f1f5}
-@media(prefers-color-scheme:dark){:root{--bg:#0e1013;--card:#171a1f;--fg:#eceef2;--mu:#8b93a1;--bd:#262a31;--ac:#8b85ff;--up:#4ade80;--dn:#f87171;--upb:#12301f;--dnb:#3a1a1a;--sub:#1f2329}}
+:root{color-scheme:light dark;--bg:#fff6f0;--card:#fff;--fg:#231433;--mu:#7d6b8d;--bd:#f1e4ee;--sub:#f9edf6;--up:#059669;--dn:#e11d48;--upb:#d9f7ea;--dnb:#ffe0e7;--sh:rgba(124,58,237,.14);
+--t:#0891b2;--a:#f97316;--f:#c026d3;--l:#d97706;--m:#7c3aed}
+@media(prefers-color-scheme:dark){:root{--bg:#140f1f;--card:#1e1731;--fg:#f6f0ff;--mu:#a597bd;--bd:#2f2548;--sub:#2a2142;--up:#34d399;--dn:#fb7185;--upb:#11382c;--dnb:#42202b;--sh:rgba(0,0,0,.4);
+--t:#22d3ee;--a:#ff9f43;--f:#e879f9;--l:#fbbf24;--m:#a78bfa}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
-.top{padding:16px 16px 8px}h1{margin:0;font-size:24px;letter-spacing:-.5px}.mu{color:var(--mu);font-size:12px}
-.bar{display:flex;gap:8px;flex-wrap:wrap;padding:8px 16px}
-.bar input,.bar select{font:inherit;font-size:15px;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:9px 12px}
-#q{flex:1 1 100%}.bar label{display:flex;align-items:center;gap:6px;color:var(--mu);font-size:13px}.bar label input{width:64px}
-.card{margin:4px 12px 12px;background:var(--card);border:1px solid var(--bd);border-radius:16px;overflow:hidden}
-#w{overflow:auto;max-height:72vh}table{border-collapse:separate;border-spacing:0;white-space:nowrap;font-variant-numeric:tabular-nums}
-th,td{padding:9px 11px;text-align:right;border-bottom:1px solid var(--bd)}
-th{position:sticky;top:0;z-index:2;background:var(--card);font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.4px}
-th.sb{cursor:pointer}th.on{color:var(--ac)}
-td:first-child,th:first-child{position:sticky;left:0;z-index:3;text-align:left;background:var(--card);border-right:1px solid var(--bd)}
-th:first-child{z-index:4}.n{font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis}
-tr:last-child td{border-bottom:0}.fl{background:var(--sub)}
-.ln{width:58px;font:inherit;text-align:center;color:var(--fg);background:var(--sub);border:1px solid transparent;border-radius:9px;padding:6px}.ln:focus{outline:0;border-color:var(--ac)}
-.pl{padding:3px 8px;border-radius:99px;font-weight:600}.pl.up{background:var(--upb);color:var(--up)}.pl.dn{background:var(--dnb);color:var(--dn)}
-.up{color:var(--up)}.dn{color:var(--dn)}b.up,b.dn{font-weight:600}.rk{font-size:12px;font-weight:600}
-.note{padding:0 16px 16px;color:var(--mu);font-size:12px}
-#o{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;z-index:9}
-.sh{background:var(--bg);width:100%;max-height:90vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
-.hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.hd b{font-size:20px}
-.x{border:0;background:var(--sub);color:var(--fg);border-radius:99px;width:32px;height:32px;font-size:16px}
-.g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.t{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 10px}.t div:first-child{color:var(--mu);font-size:11px}.t div:last-child{font-weight:600}
-.sh table{width:100%;background:var(--card);border-radius:12px}.sh th,.sh td{text-align:center;padding:7px 4px}.sh th{position:static}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.35 ui-rounded,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;padding:0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.hero{background:linear-gradient(135deg,#3b1d8f,#c026d3 62%,#ff7a18);color:#fff;padding:calc(env(safe-area-inset-top) + 20px) 18px 20px;border-radius:0 0 30px 30px}
+h1{margin:0;font-size:34px;font-weight:800;letter-spacing:-1px}.sea{font-size:15px;opacity:.9;margin:2px 0 12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}.chips span{background:rgba(255,255,255,.2);padding:4px 10px;border-radius:99px;font-size:12px}
+#q{width:100%;font:inherit;color:#fff;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:11px 14px}
+#q::placeholder{color:rgba(255,255,255,.8)}#q:focus{outline:2px solid #fff}
+.bar{display:flex;gap:8px;flex-wrap:wrap;padding:14px 16px 8px;align-items:center}
+.bar select,.bar input{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 10px}
+.bar label{display:flex;align-items:center;gap:6px;color:var(--mu);font-size:13px}.bar label input{width:62px}
+.panel{margin:4px 12px 14px;background:var(--card);border-radius:22px;box-shadow:0 10px 32px var(--sh);overflow:hidden}
+#w{overflow:auto;max-height:74vh}table{border-collapse:separate;border-spacing:0;white-space:nowrap;font-variant-numeric:tabular-nums}
+th,td{padding:10px 11px;text-align:right;border-bottom:1px solid var(--bd)}
+th{position:sticky;top:0;z-index:2;background:var(--card);font-size:12px;font-weight:700;color:var(--gc,var(--mu));border-bottom:3px solid var(--gc,var(--bd))}
+th.sb{cursor:pointer}th.on{background:var(--sub)}
+td{background:var(--tint,transparent)}
+.gt{--gc:var(--t);--tint:color-mix(in srgb,var(--t) 9%,transparent)}.ga{--gc:var(--a);--tint:color-mix(in srgb,var(--a) 9%,transparent)}
+.gf{--gc:var(--f)}.gl{--gc:var(--l);--tint:color-mix(in srgb,var(--l) 11%,transparent)}.gm{--gc:var(--m)}
+td:first-child,th:first-child{position:sticky;left:0;z-index:3;text-align:left;background:var(--card);box-shadow:1px 0 0 var(--bd)}th:first-child{z-index:4}
+tr:last-child td{border-bottom:0}
+.who{display:flex;align-items:center;gap:9px}.av{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:800}
+.n{font-weight:700;max-width:118px;overflow:hidden;text-overflow:ellipsis}.mu{color:var(--mu);font-size:12px}
+.ln{width:60px;font:inherit;font-weight:600;text-align:center;color:var(--fg);background:var(--card);border:2px solid var(--t);border-radius:11px;padding:5px}.ln:focus{outline:0;box-shadow:0 0 0 3px color-mix(in srgb,var(--t) 30%,transparent)}
+.pc{display:inline-block;min-width:44px;padding:3px 8px;border-radius:9px;font-weight:700;text-align:center;background:var(--sub)}
+.pc.up,.pl.up{background:var(--upb);color:var(--up)}.pc.dn,.pl.dn{background:var(--dnb);color:var(--dn)}.pc small{font-weight:500;opacity:.75}
+.pl{padding:3px 9px;border-radius:99px;font-weight:700}.av2{color:var(--a);font-weight:800;font-size:16px}
+.rk{padding:2px 7px;border-radius:99px;font-size:12px;font-weight:700;background:var(--sub)}.rk.up{background:var(--upb);color:var(--up)}.rk.dn{background:var(--dnb);color:var(--dn)}
+.note{padding:0 18px 22px;color:var(--mu);font-size:12px;max-width:620px}
+#o{position:fixed;inset:0;background:rgba(20,10,40,.55);display:none;align-items:flex-end;z-index:9}
+.sh{background:var(--bg);width:100%;max-height:90vh;overflow:auto;border-radius:26px 26px 0 0;animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.sh .hd{background:linear-gradient(135deg,#3b1d8f,#c026d3 65%,#ff7a18);color:#fff;padding:18px 18px 16px;display:flex;justify-content:space-between;align-items:center}
+.hd b{font-size:22px;font-weight:800}.x{border:0;background:rgba(255,255,255,.25);color:#fff;border-radius:99px;width:34px;height:34px;font-size:16px}
+.bd{padding:14px 14px calc(18px + env(safe-area-inset-bottom))}
+.g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.tl{background:var(--card);border-radius:14px;padding:9px 11px;border-left:4px solid var(--c)}.tl div:first-child{color:var(--mu);font-size:12px}.tl div:last-child{font-weight:700;font-size:16px}
+.sh table{width:100%;background:var(--card);border-radius:14px}.sh th,.sh td{text-align:center;padding:8px 4px;background:none;position:static;border-bottom:1px solid var(--bd)}.sh th{color:var(--mu);border-bottom:1px solid var(--bd)}
 </style></head><body>
-<div class="top"><h1 id="h">PRA Props</h1><div class="mu" id="u">Loading…</div></div>
-<div class="bar"><input id="q" placeholder="Search player">
-<select id="tm"><option value="">All teams</option></select>
-<label>Top <input id="tp" type="number" value="100"></label><label>Min GP <input id="mg" type="number" value="10"></label></div>
-<div class="card"><div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div></div>
-<div class="note">Past results, not predictions. Early-season samples are small. Floor 90 = PRA reached in at least 90% of games. L5 is green or red when 15%+ above or below the season average. Opp allowed: PRA the next opponent gives up per game (#1 = most). Tap a name for details.</div>
+<div class="hero"><h1>PRA Props</h1><div class="sea" id="se">Loading…</div><div class="chips" id="ch"></div><input id="q" placeholder="Search a player"></div>
+<div class="bar"><select id="tm"><option value="">All teams</option></select>
+<label>Top <input id="tp" type="number" value="100"></label><label>Min games <input id="mg" type="number" value="10"></label></div>
+<div class="panel"><div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div></div>
+<div class="note">These are past results, not predictions, and small samples early in the season are unreliable. Floor 90 is the PRA a player reached in at least 90% of games. L5 turns green or red when it is 15% above or below the season average. Opp allowed is the PRA the next opponent gives up per game (#1 gives up the most). Tap a name for full details.</div>
 <div id="o" onclick="if(event.target==this)this.style.display='none'"><div class="sh" id="sh"></div></div>
 <script>
 const $=i=>document.getElementById(i);
 let D,T,S={k:4,d:-1},L={};
 try{L=JSON.parse(localStorage.getItem('lines')||'{}')}catch(e){}
 const f=(x,n=1)=>x==null?'–':(+x).toFixed(n);
-const cnt=(a,l)=>a.filter(v=>v>l).length;
-const pc=(a,l)=>{const c=cnt(a,l),n=a.length,p=Math.round(100*c/n);return`<b class="${p>=60?'up':p<=40?'dn':''}">${p}%</b> <span class="mu">${c}/${n}</span>`};
+const hue=s=>[...s].reduce((a,c)=>a*31+c.charCodeAt(0),7)%360;
+const pc=(a,l)=>{const c=a.filter(v=>v>l).length,n=a.length,p=Math.round(100*c/n);return`<span class="pc ${p>=60?'up':p<=40?'dn':''}">${p}% <small>${c}/${n}</small></span>`};
 const O=p=>p.next&&T[p.next.opp];
 const tr=p=>p.l5>=p.avg*1.15?'up':p.l5<=p.avg*.85?'dn':'';
+const spark=p=>{const v=p.pra.slice(-10),m=Math.max(...v,p.avg)*1.08;return`<svg width="70" height="26" viewBox="0 0 70 26">`+v.map((x,i)=>`<rect x="${i*7}" y="${26-x/m*26}" width="5" height="${x/m*26}" rx="1.5" fill="var(${x>=p.avg?'--up':'--dn'})"/>`).join('')+`<line x1="0" x2="70" y1="${26-p.avg/m*26}" y2="${26-p.avg/m*26}" stroke="var(--fg)" stroke-width=".8" stroke-dasharray="2 2" opacity=".55"/></svg>`};
 const C=[
-{l:'Player',g:p=>p.name,r:p=>`<div class="n">${p.name}</div><div class="mu">${p.team}</div>`},
-{l:'Line',r:p=>`<input class="ln" inputmode="decimal" placeholder="–" value="${L[p.id]??''}" oninput="ln(${p.id},this.value)">`},
-{l:'Over',r:p=>`<span id="s${p.id}"></span>`},
-{l:'Over L10',r:p=>`<span id="t${p.id}"></span>`},
-{l:'Avg',g:p=>p.avg,r:p=>`<b>${f(p.avg)}</b>`},
-{l:'Median',g:p=>p.med,r:p=>f(p.med)},
-{l:'L5',g:p=>p.l5,r:p=>`<span class="pl ${tr(p)}">${f(p.l5)}</span>`},
-{l:'L10',g:p=>p.l10,r:p=>f(p.l10)},
-{l:'Floor 90',g:p=>p.f90,r:p=>p.f90,c:'fl'},{l:'Floor 80',g:p=>p.f80,r:p=>p.f80,c:'fl'},{l:'Floor 70',g:p=>p.f70,r:p=>p.f70,c:'fl'},
-{l:'GP',g:p=>p.gp,r:p=>p.gp},{l:'Min',g:p=>p.min,r:p=>f(p.min)},
-{l:'Next',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> ${p.next.opp}`:'–'},
-{l:'Opp allowed',g:p=>O(p)&&O(p).allowed,r:p=>O(p)?`${f(O(p).allowed)} <span class="rk ${O(p).rank<=10?'up':O(p).rank>=21?'dn':''}">#${O(p).rank}</span>`:'–'}];
+{l:'Player',g:p=>p.name,r:p=>`<div class="who"><div class="av" style="background:hsl(${hue(p.team)} 72% 46%)">${p.team}</div><div><div class="n">${p.name}</div><div class="mu">${p.gp} games</div></div></div>`},
+{l:'Line',c:'gt',r:p=>`<input class="ln" inputmode="decimal" placeholder="–" value="${L[p.id]??''}" oninput="ln(${p.id},this.value)">`},
+{l:'Over',c:'gt',r:p=>`<span id="s${p.id}"></span>`},
+{l:'Over L10',c:'gt',r:p=>`<span id="t${p.id}"></span>`},
+{l:'Avg',c:'ga',g:p=>p.avg,r:p=>`<span class="av2">${f(p.avg)}</span>`},
+{l:'Median',c:'ga',g:p=>p.med,r:p=>f(p.med)},
+{l:'L5',c:'gf',g:p=>p.l5,r:p=>`<span class="pl ${tr(p)}">${f(p.l5)}</span>`},
+{l:'L10',c:'gf',g:p=>p.l10,r:p=>f(p.l10)},
+{l:'Last 10',c:'gf',r:spark},
+{l:'Floor 90',c:'gl',g:p=>p.f90,r:p=>p.f90},{l:'Floor 80',c:'gl',g:p=>p.f80,r:p=>p.f80},{l:'Floor 70',c:'gl',g:p=>p.f70,r:p=>p.f70},
+{l:'Minutes',c:'gm',g:p=>p.min,r:p=>f(p.min)},
+{l:'Next',c:'gm',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> <b>${p.next.opp}</b>`:'–'},
+{l:'Opp allowed',c:'gm',g:p=>O(p)&&O(p).allowed,r:p=>O(p)?`${f(O(p).allowed)} <span class="rk ${O(p).rank<=10?'up':O(p).rank>=21?'dn':''}">#${O(p).rank}</span>`:'–'}];
 function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==13)?1:-1};draw()}
 function res(p){const l=parseFloat(L[p.id]),a=$('s'+p.id),b=$('t'+p.id);if(!a)return;
-a.innerHTML=b.innerHTML=isNaN(l)?'<span class="mu">–</span>':'';if(!isNaN(l)){a.innerHTML=pc(p.pra,l);b.innerHTML=pc(p.pra.slice(-10),l)}}
+if(isNaN(l)){a.innerHTML=b.innerHTML='<span class="mu">–</span>'}else{a.innerHTML=pc(p.pra,l);b.innerHTML=pc(p.pra.slice(-10),l)}}
 function ln(id,v){L[id]=v;try{localStorage.setItem('lines',JSON.stringify(L))}catch(e){}res(D.players.find(p=>p.id==id))}
 function draw(){
 $('th').innerHTML='<tr>'+C.map((c,i)=>`<th class="${c.g?'sb':''} ${S.k==i?'on':''} ${c.c||''}"${c.g?` onclick="srt(${i})"`:''}>${c.l}${S.k==i?(S.d<0?' ↓':' ↑'):''}</th>`).join('')+'</tr>';
@@ -73,17 +88,17 @@ const g=C[S.k].g;a.sort((x,y)=>{const u=g(x),v=g(y);if(u==null)return 1;if(v==nu
 $('b').innerHTML=a.map(p=>'<tr>'+C.map((c,i)=>`<td class="${c.c||''}"${i==0?` onclick="det(${p.id})"`:''}>${c.r(p)}</td>`).join('')+'</tr>').join('');
 a.forEach(res)}
 function det(id){const p=D.players.find(x=>x.id==id),l=parseFloat(L[id]),G=p.games,has=!isNaN(l),mx=Math.max(...G.map(x=>x.pra),has?l:0)*1.12,W=340,H=140,bw=W/G.length;
-const bars=G.map((x,i)=>`<rect x="${i*bw+3}" y="${H-x.pra/mx*H}" width="${bw-6}" height="${x.pra/mx*H}" rx="3" fill="${has?(x.pra>l?'var(--up)':'var(--dn)'):'var(--ac)'}" opacity=".85"/>`).join('');
+const bars=G.map((x,i)=>`<rect x="${i*bw+3}" y="${H-x.pra/mx*H}" width="${bw-6}" height="${x.pra/mx*H}" rx="4" fill="${has?(x.pra>l?'var(--up)':'var(--dn)'):'var(--a)'}"/>`).join('');
 const ly=has?`<line x1="0" x2="${W}" y1="${H-l/mx*H}" y2="${H-l/mx*H}" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/>`:'';
-const tl=(a,b)=>`<div class="t"><div>${a}</div><div>${b}</div></div>`,sb=s=>s?f(s.avg)+' ('+s.n+')':'n/a';
-$('sh').innerHTML=`<div class="hd"><div><b>${p.name}</b><div class="mu">${p.team} · ${p.gp} games</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div>
-<div class="g">${tl('Std dev',f(p.sd))}${tl('Low – High',p.mn+' – '+p.mx)}${tl('L5 minutes',f(p.l5min))}${tl('Home avg',f(p.home))}${tl('Away avg',f(p.away))}${tl('Back-to-back',sb(p.b2b))}${tl('2+ days rest',sb(p.r2))}${tl('Floor 90 / 80',p.f90+' / '+p.f80)}${tl('Floor 70',p.f70)}</div>
-<svg viewBox="0 0 ${W} ${H}" width="100%">${bars}${ly}</svg><div class="mu" style="margin:4px 0 12px">Last ${G.length} games, oldest to newest${has?' · dashed line = '+l:''}</div>
-<table><tr class="mu"><th>Date</th><th>Opp</th><th>Min</th><th>PTS</th><th>REB</th><th>AST</th><th>PRA</th></tr>`+
-[...G].reverse().map(x=>`<tr><td>${x.d.slice(5)}</td><td>${x.h?'vs':'@'} ${x.o}</td><td>${x.m}</td><td>${x.p}</td><td>${x.r}</td><td>${x.a}</td><td><b>${x.pra}</b></td></tr>`).join('')+'</table>';
+const tl=(a,b,c)=>`<div class="tl" style="--c:var(${c})"><div>${a}</div><div>${b}</div></div>`,sb=s=>s?f(s.avg)+' ('+s.n+')':'n/a';
+$('sh').innerHTML=`<div class="hd"><div><b>${p.name}</b><div style="opacity:.9">${p.team}, ${p.gp} games</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">
+<div class="g">${tl('Std dev',f(p.sd),'--a')}${tl('Low to high',p.mn+' to '+p.mx,'--a')}${tl('L5 minutes',f(p.l5min),'--m')}${tl('Home avg',f(p.home),'--t')}${tl('Away avg',f(p.away),'--t')}${tl('Back-to-back',sb(p.b2b),'--f')}${tl('2+ days rest',sb(p.r2),'--f')}${tl('Floor 90 / 80',p.f90+' / '+p.f80,'--l')}${tl('Floor 70',p.f70,'--l')}</div>
+<svg viewBox="0 0 ${W} ${H}" width="100%">${bars}${ly}</svg><div class="mu" style="margin:4px 0 12px">Last ${G.length} games, oldest to newest${has?'. Dashed line is your line, '+l:''}</div>
+<table><tr><th>Date</th><th>Opp</th><th>Min</th><th>PTS</th><th>REB</th><th>AST</th><th>PRA</th></tr>`+
+[...G].reverse().map(x=>`<tr><td>${x.d.slice(5)}</td><td>${x.h?'vs':'@'} ${x.o}</td><td>${x.m}</td><td>${x.p}</td><td>${x.r}</td><td>${x.a}</td><td><b>${x.pra}</b></td></tr>`).join('')+'</table></div>';
 $('o').style.display='flex'}
-fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('h').textContent='PRA Props · '+d.season;
-$('u').textContent='Updated '+d.updated+(d.through?' · games through '+d.through:'');
+fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('se').textContent='NBA regular season '+d.season;
+$('ch').innerHTML=`<span>Updated ${d.updated}</span>`+(d.through?`<span>Games through ${d.through}</span>`:'');
 [...new Set(d.players.map(p=>p.team))].sort().forEach(t=>$('tm').add(new Option(t,t)));
-['tp','mg','q','tm'].forEach(i=>$(i).addEventListener('input',draw));draw()}).catch(e=>{$('u').textContent='No data yet ('+e+')'});
+['tp','mg','q','tm'].forEach(i=>$(i).addEventListener('input',draw));draw()}).catch(e=>{$('se').textContent='No data yet ('+e+')'});
 </script></body></html>
