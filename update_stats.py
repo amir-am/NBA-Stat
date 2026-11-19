@@ -30,13 +30,65 @@ def fetch_log(season):
     from nba_api.stats.endpoints import leaguegamelog
     df = leaguegamelog.LeagueGameLog(
         season=season, player_or_team_abbreviation="P",
-        season_type_all_star="Regular Season", timeout=60).get_data_frames()[0]
+        season_type_all_star="Regular Season", timeout=25).get_data_frames()[0]
     return df.to_dict("records")
 
 
 def fetch_sched():
     import requests
     return requests.get(SCHED, timeout=60, headers={"User-Agent": "Mozilla/5.0"}).json()
+
+
+UA = {"User-Agent": "Mozilla/5.0"}
+BOX = "https://cdn.nba.com/static/json/liveData/boxscore/boxscore_{}.json"
+
+
+def parse_min(s):
+    import re
+    mm = re.match(r"PT(\d+)M([\d.]+)S", s or "")
+    return int(mm[1]) + float(mm[2]) / 60 if mm else 0
+
+
+def box_rows(j, gid, d):
+    rows = []
+    for side, oth in (("homeTeam", "awayTeam"), ("awayTeam", "homeTeam")):
+        me, op = j[side]["teamTricode"], j[oth]["teamTricode"]
+        mu = f"{me} vs. {op}" if side == "homeTeam" else f"{me} @ {op}"
+        for p in j[side]["players"]:
+            s = p["statistics"]
+            rows.append(dict(PLAYER_ID=p["personId"], PLAYER_NAME=p["name"], TEAM_ABBREVIATION=me,
+                             GAME_ID=gid, GAME_DATE=d, MATCHUP=mu, MIN=parse_min(s.get("minutes")),
+                             PTS=s["points"], REB=s["reboundsTotal"], AST=s["assists"]))
+    return rows
+
+
+def fetch_cdn(sched, path="games_cache.json", budget=720):
+    import requests
+    from concurrent.futures import ThreadPoolExecutor
+    cache = json.load(open(path)) if os.path.exists(path) else {}
+    todo = [(str(g["gameId"]), g["gameDateEst"][:10]) for gd in sched["leagueSchedule"]["gameDates"]
+            for g in gd["games"] if g["gameStatus"] == 3 and str(g["gameId"]).startswith("002")
+            and str(g["gameId"]) not in cache]
+    end = time.time() + budget
+
+    def one(t):
+        gid, d = t
+        if time.time() > end:
+            return gid, None
+        try:
+            j = retry(lambda: requests.get(BOX.format(gid), timeout=20, headers=UA).json(), 3)["game"]
+            return gid, box_rows(j, gid, d)
+        except Exception:
+            return gid, None
+    with ThreadPoolExecutor(8) as ex:
+        for gid, rows in ex.map(one, todo):
+            if rows:
+                cache[gid] = rows
+    print(f"cache: {len(cache)} games, {len(todo)} were new")
+    with open(path + ".tmp", "w") as f:
+        json.dump(cache, f, separators=(",", ":"))
+    os.replace(path + ".tmp", path)
+    return [r for rows in cache.values() for r in rows]
 
 
 def build(rows, sched, season, now):
@@ -103,16 +155,21 @@ def main():
     now = dt.datetime.now(dt.timezone.utc)
     season = season_str(now)
     try:
-        rows = retry(lambda: fetch_log(season))
+        sched = retry(fetch_sched, 3)
     except Exception as e:
-        sys.exit(f"ERROR: NBA.com unreachable, data.json left unchanged ({e})")
+        sys.exit(f"ERROR: NBA schedule unreachable, data.json left unchanged ({e})")
+    rows = []
+    try:
+        rows = fetch_cdn(sched)
+    except Exception as e:
+        print("CDN route failed:", e, file=sys.stderr)
+    if not rows:
+        try:
+            rows = retry(lambda: fetch_log(season), 2)
+        except Exception as e:
+            sys.exit(f"ERROR: NBA.com unreachable, data.json left unchanged ({e})")
     if not rows:
         sys.exit("ERROR: no game data yet for " + season + "; data.json left unchanged")
-    try:
-        sched = retry(fetch_sched)
-    except Exception as e:
-        print("WARNING: schedule unavailable, no next opponent:", e, file=sys.stderr)
-        sched = {}
     out = build(rows, sched, season, now)
     with open("data.json.tmp", "w") as f:
         json.dump(out, f, separators=(",", ":"))
