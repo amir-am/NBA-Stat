@@ -198,6 +198,14 @@ def fetch_espn(now, path="espn_cache.json", budget=720):
 SDV = "https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_nba_player_boxscores/player_box_{}.csv"
 
 
+def et_iso(t):
+    try:
+        from zoneinfo import ZoneInfo
+        return dt.datetime.fromisoformat(t.replace("Z", "+00:00")).astimezone(ZoneInfo("America/New_York")).date().isoformat()
+    except Exception:
+        return t[:10]
+
+
 def et_date(d, g):
     t = g(d, "game_date_time") or ""
     if t.endswith("Z") or "+00" in t:
@@ -308,7 +316,7 @@ def build(rows, sched, season, now):
                 h, a, t = g["homeTeam"]["teamTricode"], g["awayTeam"]["teamTricode"], g["gameDateTimeUTC"]
                 for me, op, ih in ((h, a, True), (a, h, False)):
                     if me and op and (me not in nxt or t < nxt[me][0]):
-                        nxt[me] = (t, {"opp": op, "home": ih, "date": t[:10]})
+                        nxt[me] = (t, {"opp": op, "home": ih, "date": et_iso(t), "utc": t})
     by = defaultdict(list)
     for x in sorted(R, key=lambda x: x["date"]):
         by[x["id"]].append(x)
