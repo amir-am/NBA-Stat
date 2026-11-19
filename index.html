@@ -27,8 +27,8 @@ td{background:var(--tint,transparent)}
 .gf{--gc:var(--f)}.gl{--gc:var(--l);--tint:color-mix(in srgb,var(--l) 11%,transparent)}.gm{--gc:var(--m)}
 td:first-child,th:first-child{position:sticky;left:0;z-index:3;text-align:left;background:var(--card);box-shadow:1px 0 0 var(--bd)}th:first-child{z-index:4}
 tr:last-child td{border-bottom:0}
-.who{display:flex;align-items:center;gap:9px}.av{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:800}
-.n{font-weight:700;max-width:118px;overflow:hidden;text-overflow:ellipsis}.mu{color:var(--mu);font-size:12px}
+.who{display:flex;align-items:center;gap:9px}.av{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:800}
+.n{font-weight:700;font-size:14px;white-space:nowrap}.no{flex:none;width:22px;text-align:right;color:var(--mu);font-size:12px;font-weight:600}.mu{color:var(--mu);font-size:12px}
 .ln{width:60px;font:inherit;font-weight:600;text-align:center;color:var(--fg);background:var(--card);border:2px solid var(--t);border-radius:11px;padding:5px}.ln:focus{outline:0;box-shadow:0 0 0 3px color-mix(in srgb,var(--t) 30%,transparent)}
 .pc{display:inline-block;min-width:44px;padding:3px 8px;border-radius:9px;font-weight:700;text-align:center;background:var(--sub)}
 .pc.up,.pl.up{background:var(--upb);color:var(--up)}.pc.dn,.pl.dn{background:var(--dnb);color:var(--dn)}.pc small{font-weight:500;opacity:.75}
@@ -47,50 +47,60 @@ tr:last-child td{border-bottom:0}
 .hb{margin:-4px 0 14px;font:inherit;font-weight:700;font-size:13px;color:#3b1d8f;background:#fff;border:0;border-radius:99px;padding:7px 14px}
 .hp{background:var(--card);border-left:4px solid var(--c);border-radius:14px;padding:10px 12px;margin-bottom:8px}.hp b{display:block;margin-bottom:2px}.hp span{color:var(--mu);font-size:13.5px}
 .hp i{font-style:normal;font-weight:700}.hh{font-weight:800;font-size:17px;margin:14px 2px 8px}
+.chip{font:inherit;font-size:14px;font-weight:600;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:9px 13px}
+.chip.on{background:linear-gradient(135deg,#c026d3,#ff7a18);color:#fff;border-color:transparent}
+.tg{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.tb{font:inherit;font-weight:700;color:var(--fg);background:var(--card);border:2px solid transparent;border-radius:14px;padding:8px 0;display:grid;place-items:center}
+.tb.on{border-color:var(--a)}.tb.all{grid-column:1/-1;padding:11px}
 </style></head><body>
 <div class="hero"><h1>PRA Props</h1><div class="sea" id="se">Loading…</div><div class="chips" id="ch"></div><button class="hb" onclick="help()">How to read this</button><input id="q" placeholder="Search a player"></div>
-<div class="bar"><select id="tm"><option value="">All teams</option></select>
+<div class="bar"><button class="chip" id="td" onclick="today()">Playing today</button><button class="chip" id="tmb" onclick="teams()">All teams</button>
 <label>Top <input id="tp" type="number" value="100"></label><label>Min games <input id="mg" type="number" value="10"></label></div>
-<div class="panel"><div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div></div>
+<div class="panel"><div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div><div id="em" class="mu" style="padding:14px 16px"></div></div>
 <div class="note">These are past results, not predictions, and small samples early in the season are unreliable. Floor 90 is the PRA a player reached in at least 90% of games. L5 turns green or red when it is 15% above or below the season average. Opp allowed is the PRA the next opponent gives up per game (#1 gives up the most). Tap a name for full details.</div>
 <div id="o" onclick="if(event.target==this)this.style.display='none'"><div class="sh" id="sh"></div></div>
 <script>
 const $=i=>document.getElementById(i);
-let D,T,S={k:4,d:-1},L={};
+let D,T,S={k:4,d:-1},L={},TM='',TD=false,TODAY='';
 try{L=JSON.parse(localStorage.getItem('lines')||'{}')}catch(e){}
 const et=s=>{try{const d=new Date(s.replace(' UTC','Z').replace(' ','T'));return d.toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET'}catch(e){return s}};
 const f=(x,n=1)=>x==null?'–':(+x).toFixed(n);
 const hue=s=>[...s].reduce((a,c)=>a*31+c.charCodeAt(0),7)%360;
 const pc=(a,l)=>{const c=a.filter(v=>v>l).length,n=a.length,p=Math.round(100*c/n);return`<span class="pc ${p>=60?'up':p<=40?'dn':''}">${p}% <small>${c}/${n}</small></span>`};
-const O=p=>p.next&&T[p.next.opp];
+const gday=n=>n.utc?new Date(n.utc).toLocaleDateString('en-CA',{timeZone:'America/New_York'}):n.date;
+const gtime=n=>n.utc?new Date(n.utc).toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'}):'';
+const plays=p=>p.next&&gday(p.next)==TODAY;
+const O=p=>p.next&&T[p.next.opp];p.next&&T[p.next.opp];
 const tr=p=>p.l5>=p.avg*1.15?'up':p.l5<=p.avg*.85?'dn':'';
-const spark=p=>{const v=p.pra.slice(-10),m=Math.max(...v,p.avg)*1.08;return`<svg width="70" height="26" viewBox="0 0 70 26">`+v.map((x,i)=>`<rect x="${i*7}" y="${26-x/m*26}" width="5" height="${x/m*26}" rx="1.5" fill="var(${x>=p.avg?'--up':'--dn'})"/>`).join('')+`<line x1="0" x2="70" y1="${26-p.avg/m*26}" y2="${26-p.avg/m*26}" stroke="var(--fg)" stroke-width=".8" stroke-dasharray="2 2" opacity=".55"/></svg>`};
+const spark=p=>{const v=p.pra.slice(-5),m=Math.max(...v,p.avg)*1.08;return`<svg width="70" height="26" viewBox="0 0 70 26">`+v.map((x,i)=>`<rect x="${i*14}" y="${26-x/m*26}" width="11" height="${x/m*26}" rx="3" fill="var(${x>=p.avg?'--up':'--dn'})"/>`).join('')+`<line x1="0" x2="70" y1="${26-p.avg/m*26}" y2="${26-p.avg/m*26}" stroke="var(--fg)" stroke-width=".8" stroke-dasharray="2 2" opacity=".55"/></svg>`};
 const C=[
-{l:'Player',g:p=>p.name,r:p=>`<div class="who"><div class="av" style="background:hsl(${hue(p.team)} 72% 46%)">${p.team}</div><div><div class="n">${p.name}</div><div class="mu">${p.gp} games</div></div></div>`},
+{l:'Player',g:p=>p.name,r:(p,i)=>`<div class="who"><span class="no">${i+1}</span><div class="av" style="background:hsl(${hue(p.team)} 72% 46%)">${p.team}</div><div><div class="n">${p.name}</div><div class="mu">${p.gp} games</div></div></div>`},
 {l:'Line',c:'gt',r:p=>`<input class="ln" inputmode="decimal" placeholder="–" value="${L[p.id]??''}" oninput="ln(${p.id},this.value)">`},
 {l:'Over',c:'gt',r:p=>`<span id="s${p.id}"></span>`},
-{l:'Over L10',c:'gt',r:p=>`<span id="t${p.id}"></span>`},
+{l:'Over L5',c:'gt',r:p=>`<span id="t${p.id}"></span>`},
 {l:'Avg',c:'ga',g:p=>p.avg,r:p=>`<span class="av2">${f(p.avg)}</span>`},
 {l:'Median',c:'ga',g:p=>p.med,r:p=>f(p.med)},
 {l:'L5',c:'gf',g:p=>p.l5,r:p=>`<span class="pl ${tr(p)}">${f(p.l5)}</span>`},
-{l:'L10',c:'gf',g:p=>p.l10,r:p=>f(p.l10)},
-{l:'Last 10',c:'gf',r:spark},
+{l:'Last 5',c:'gf',r:spark},
 {l:'Floor 90',c:'gl',g:p=>p.f90,r:p=>p.f90},{l:'Floor 80',c:'gl',g:p=>p.f80,r:p=>p.f80},{l:'Floor 70',c:'gl',g:p=>p.f70,r:p=>p.f70},
 {l:'Minutes',c:'gm',g:p=>p.min,r:p=>f(p.min)},
-{l:'Next',c:'gm',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> <b>${p.next.opp}</b>`:'–'},
+{l:'Next',c:'gm',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> <b>${p.next.opp}</b>${plays(p)?` <span class="mu">${gtime(p.next)} ET</span>`:''}`:'–'},
 {l:'Opp allowed',c:'gm',g:p=>O(p)&&O(p).allowed,r:p=>O(p)?`${f(O(p).allowed)} <span class="rk ${O(p).rank<=10?'up':O(p).rank>=21?'dn':''}">#${O(p).rank}</span>`:'–'}];
-function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==13)?1:-1};draw()}
+function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==12)?1:-1};draw()}
 function res(p){const l=parseFloat(L[p.id]),a=$('s'+p.id),b=$('t'+p.id);if(!a)return;
-if(isNaN(l)){a.innerHTML=b.innerHTML='<span class="mu">–</span>'}else{a.innerHTML=pc(p.pra,l);b.innerHTML=pc(p.pra.slice(-10),l)}}
+if(isNaN(l)){a.innerHTML=b.innerHTML='<span class="mu">–</span>'}else{a.innerHTML=pc(p.pra,l);b.innerHTML=pc(p.pra.slice(-5),l)}}
 function ln(id,v){L[id]=v;try{localStorage.setItem('lines',JSON.stringify(L))}catch(e){}res(D.players.find(p=>p.id==id))}
 function draw(){
 $('th').innerHTML='<tr>'+C.map((c,i)=>`<th class="${c.g?'sb':''} ${S.k==i?'on':''} ${c.c||''}"${c.g?` onclick="srt(${i})"`:''}>${c.l}${S.k==i?(S.d<0?' ↓':' ↑'):''}</th>`).join('')+'</tr>';
 const q=$('q').value.toLowerCase();
-let a=D.players.filter(p=>p.gp>=+$('mg').value&&(!$('tm').value||p.team==$('tm').value)&&p.name.toLowerCase().includes(q));
+let a=D.players.filter(p=>p.gp>=+$('mg').value&&(!TM||p.team==TM)&&(!TD||plays(p))&&p.name.toLowerCase().includes(q));
 a.sort((x,y)=>y.avg-x.avg);a=a.slice(0,+$('tp').value||100);
 const g=C[S.k].g;a.sort((x,y)=>{const u=g(x),v=g(y);if(u==null)return 1;if(v==null)return-1;return(u>v?1:u<v?-1:0)*S.d});
-$('b').innerHTML=a.map(p=>'<tr>'+C.map((c,i)=>`<td class="${c.c||''}"${i==0?` onclick="det(${p.id})"`:''}>${c.r(p)}</td>`).join('')+'</tr>').join('');
-a.forEach(res)}
+$('b').innerHTML=a.map((p,r)=>'<tr>'+C.map((c,i)=>`<td class="${c.c||''}"${i==0?` onclick="det(${p.id})"`:''}>${c.r(p,r)}</td>`).join('')+'</tr>').join('');
+a.forEach(res);$('em').textContent=a.length?'':(TD?'No players with a game today in the data. The data was last updated '+et(D.updated)+'.':'No players match.')}
+function today(){TD=!TD;$('td').classList.toggle('on',TD);draw()}
+function pick(t){TM=t;$('tmb').textContent=t||'All teams';$('tmb').classList.toggle('on',!!t);$('o').style.display='none';draw()}
+function teams(){const ts=[...new Set(D.players.map(p=>p.team))].sort();
+$('sh').innerHTML=`<div class="hd"><b>Choose a team</b><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd"><div class="tg"><button class="tb all ${TM?'':'on'}" onclick="pick('')">All teams</button>`+ts.map(t=>`<button class="tb ${TM==t?'on':''}" onclick="pick('${t}')"><span class="av" style="background:hsl(${hue(t)} 72% 46%)">${t}</span></button>`).join('')+'</div></div>';$('o').style.display='flex'}
 function det(id){const p=D.players.find(x=>x.id==id),l=parseFloat(L[id]),G=p.games,has=!isNaN(l),mx=Math.max(...G.map(x=>x.pra),has?l:0)*1.12,W=340,H=140,bw=W/G.length;
 const bars=G.map((x,i)=>`<rect x="${i*bw+3}" y="${H-x.pra/mx*H}" width="${bw-6}" height="${x.pra/mx*H}" rx="4" fill="${has?(x.pra>l?'var(--up)':'var(--dn)'):'var(--a)'}"/>`).join('');
 const ly=has?`<line x1="0" x2="${W}" y1="${H-l/mx*H}" y2="${H-l/mx*H}" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/>`:'';
@@ -102,20 +112,20 @@ $('sh').innerHTML=`<div class="hd"><div><b>${p.name}</b><div style="opacity:.9">
 [...G].reverse().map(x=>`<tr><td>${x.d.slice(5)}</td><td>${x.h?'vs':'@'} ${x.o}</td><td>${x.m}</td><td>${x.p}</td><td>${x.r}</td><td>${x.a}</td><td><b>${x.pra}</b></td></tr>`).join('')+'</table></div>';
 $('o').style.display='flex'}
 function help(){
-const I=[['--t','Line, Over, Over L10','Type the sportsbook line (for example 38.5). <i>Over</i> shows how often the player went over it this season, and <i>Over L10</i> how often in the last 10 games. 60% / 6 of 10 means he cleared that line in 6 of his last 10 games. Green is 60% or more, red is 40% or less.'],
+const I=[['--t','Line, Over, Over L5','Type the sportsbook line (for example 38.5). <i>Over</i> shows how often the player went over it this season, and <i>Over L5</i> how often in the last 5 games. 60% 3/5 means he cleared that line in 3 of his last 5 games. Green is 60% or more, red is 40% or less.'],
 ['--l','Floor 90, 80, 70','The PRA a player reached or beat in at least 90%, 80% or 70% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
 ['--a','Avg and Median','Avg is the mean PRA. Median is the middle game. If Avg is well above Median, a few huge games are pulling it up, so the Median is the more typical night.'],
-['--f','L5, L10 and Last 10 bars','L5 and L10 are his average over the last 5 and 10 games. L5 is a green badge when he is running 15% or more above his season average (hot) and red when 15% or more below (cold). The small bars show each of the last 10 games: green at or above his average, red below, dashed line is the average.'],
+['--f','L5 and Last 5 bars','L5 is his average over the last 5 games. It is a green badge when he is running 15% or more above his season average (hot) and red when 15% or more below (cold). The small bars show each of the last 5 games: green at or above his average, red below, dashed line is the average.'],
 ['--m','Minutes','More minutes usually means more PRA. Tap a name to see his last 5 minutes. If they dropped, the recent numbers may overstate what he will do.'],
 ['--m','Next and Opp allowed','Next is his next game (vs is home, @ is away). Opp allowed is how many PRA that team gives up per game to all opposing players, with its rank. #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
 ['--a','Details (tap a name)','Std dev tells how swingy he is: higher means less predictable. Also home and away averages, back-to-back and rested averages (n/a if fewer than 5 games), and his last 15 games with your line on the chart.']];
 $('sh').innerHTML=`<div class="hd"><div><b>How to read this</b><div style="opacity:.9">Past stats, step by step</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">`+
 I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</span></div>`).join('')+
-`<div class="hh">A quick routine</div><div class="hp" style="--c:var(--up)"><span>1. Type the line. 2. Check Over and Over L10. 3. Compare the line with his floors. 4. Check form (L5, bars) and minutes. 5. Check the opponent rank. 6. Check injury and lineup news elsewhere, because this page does not have it and it often matters most.</span></div>
-<div class="hh">Keep in mind</div><div class="hp" style="--c:var(--dn)"><span>These are past results, not predictions. Sportsbooks already price in most of this. Early in the season the samples are small. At typical odds of -110 you need to win about 52.4% of bets just to break even, so a 55% hit rate over 10 games is not a proven edge. Only bet what you can afford to lose.</span></div></div>`;
+`<div class="hh">A quick routine</div><div class="hp" style="--c:var(--up)"><span>1. Type the line. 2. Check Over and Over L5. 3. Compare the line with his floors. 4. Check form (L5, bars) and minutes. 5. Check the opponent rank. 6. Check injury and lineup news elsewhere, because this page does not have it and it often matters most.</span></div>
+<div class="hh">Keep in mind</div><div class="hp" style="--c:var(--dn)"><span>These are past results, not predictions. Sportsbooks already price in most of this. Early in the season the samples are small. At typical odds of -110 you need to win about 52.4% of bets just to break even, so a 60% hit rate over 5 games is not a proven edge. Only bet what you can afford to lose.</span></div></div>`;
 $('o').style.display='flex'}
 fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('se').textContent='NBA regular season '+d.season;
 $('ch').innerHTML=`<span>Updated ${et(d.updated)}</span>`+(d.through?`<span>Games through ${d.through}</span>`:'');
-[...new Set(d.players.map(p=>p.team))].sort().forEach(t=>$('tm').add(new Option(t,t)));
-['tp','mg','q','tm'].forEach(i=>$(i).addEventListener('input',draw));draw()}).catch(e=>{$('se').textContent='No data yet ('+e+')'});
+TODAY=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});$('td').textContent='Playing today ('+d.players.filter(plays).length+')';
+['tp','mg','q'].forEach(i=>$(i).addEventListener('input',draw));draw()}).catch(e=>{$('se').textContent='No data yet ('+e+')'});
 </script></body></html>
