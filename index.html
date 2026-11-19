@@ -69,7 +69,7 @@ const pc=(a,l)=>{const c=a.filter(v=>v>l).length,n=a.length,p=Math.round(100*c/n
 const gday=n=>n.utc?new Date(n.utc).toLocaleDateString('en-CA',{timeZone:'America/New_York'}):n.date;
 const gtime=n=>n.utc?new Date(n.utc).toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'}):'';
 const plays=p=>p.next&&gday(p.next)==TODAY;
-const O=p=>p.next&&T[p.next.opp];p.next&&T[p.next.opp];
+const O=p=>p.next&&T[p.next.opp];
 const tr=p=>p.l5>=p.avg*1.15?'up':p.l5<=p.avg*.85?'dn':'';
 const spark=p=>{const v=p.pra.slice(-5),m=Math.max(...v,p.avg)*1.08;return`<svg width="70" height="26" viewBox="0 0 70 26">`+v.map((x,i)=>`<rect x="${i*14}" y="${26-x/m*26}" width="11" height="${x/m*26}" rx="3" fill="var(${x>=p.avg?'--up':'--dn'})"/>`).join('')+`<line x1="0" x2="70" y1="${26-p.avg/m*26}" y2="${26-p.avg/m*26}" stroke="var(--fg)" stroke-width=".8" stroke-dasharray="2 2" opacity=".55"/></svg>`};
 const C=[
