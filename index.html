@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><title>NBA PRA</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#111;--mu:#666;--bd:#ddd;--hot:#d6f0d6;--cold:#f8d7d7;--hd:#f0f0f0;--bar:#4a7bd0}
+@media(prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--mu:#999;--bd:#333;--hot:#1c4a25;--cold:#5a2323;--hd:#222;--bar:#7aa2f0}}
+body{margin:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);background:var(--bg);color:var(--fg);font:14px -apple-system,system-ui,sans-serif}
+.p{padding:8px 10px}.mu{color:var(--mu);font-size:12px}
+input,select{font:inherit;padding:4px;margin:2px;background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:6px}
+#w{overflow:auto;max-height:68vh}table{border-collapse:separate;border-spacing:0;white-space:nowrap}
+th,td{padding:5px 8px;border-bottom:1px solid var(--bd);text-align:right}
+th{position:sticky;top:0;background:var(--hd);z-index:2;cursor:pointer}
+tr{background:var(--bg)}tr.hot{background:var(--hot)}tr.cold{background:var(--cold)}
+td:first-child,th:first-child{position:sticky;left:0;text-align:left;background:inherit;z-index:3}
+th:first-child{background:var(--hd);z-index:4}
+#o{position:fixed;inset:0;background:var(--bg);overflow:auto;padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom);display:none;z-index:9}
+#o td,#o th{text-align:center}
+</style></head><body>
+<div class="p"><b id="h">NBA PRA</b> <span class="mu" id="u"></span>
+<div><label>Top <input id="tp" type="number" value="100" size="3" style="width:56px"></label>
+<label>Min GP <input id="mg" type="number" value="10" style="width:50px"></label>
+<select id="tm"><option value="">All teams</option></select>
+<input id="q" placeholder="Search name"></div>
+<div class="mu">Past stats, not predictions. Early-season samples are small and unreliable. Green row = last 5 avg 15%+ above season avg; red = 15%+ below. Floor 90% = PRA reached in at least 90% of games. Injury status is not included.</div></div>
+<div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div>
+<div id="o"></div>
+<script>
+const $=i=>document.getElementById(i);
+let D,T,S={k:2,d:-1},L={};
+try{L=JSON.parse(localStorage.getItem('lines')||'{}')}catch(e){}
+const over=(a,l)=>{const c=a.filter(v=>v>l).length;return c+'/'+a.length+' ('+Math.round(100*c/a.length)+'%)'};
+const f=(x,n=1)=>x==null?'n/a':(+x).toFixed(n);
+const O=p=>p.next&&T[p.next.opp];
+const C=[['Player',p=>p.name],['Team',p=>p.team,p=>p.team],['GP',p=>p.gp,p=>p.gp],['Avg',p=>p.avg],['Med',p=>p.med],
+['F90',p=>p.f90],['F80',p=>p.f80],['F70',p=>p.f70],['L5',p=>p.l5],['L10',p=>p.l10],['Min',p=>p.min],['L5 Min',p=>p.l5min],
+['SD',p=>p.sd],['Low',p=>p.mn,p=>p.mn],['High',p=>p.mx,p=>p.mx],['Home',p=>p.home],['Away',p=>p.away],
+['B2B',p=>p.b2b&&p.b2b.avg],['2+ rest',p=>p.r2&&p.r2.avg],
+['Next',p=>p.next&&p.next.opp,p=>p.next?(p.next.home?'vs ':'@ ')+p.next.opp:'n/a'],
+['Opp allowed (rank)',p=>O(p)&&O(p).allowed,p=>O(p)?f(O(p).allowed)+' (#'+O(p).rank+')':'n/a']];
+function head(){$('th').innerHTML='<tr>'+C.map((c,i)=>'<th onclick="srt('+i+')">'+c[0]+(S.k==i?(S.d<0?' ▼':' ▲'):'')+'</th>'+(i==0?'<th>Line</th><th>Over: season</th><th>Over: L10</th>':'')).join('')+'</tr>'}
+function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:i<2?1:-1};draw()}
+function res(p){const l=parseFloat(L[p.id]),a=$('s'+p.id),b=$('t'+p.id);if(!a)return;
+if(isNaN(l)){a.textContent=b.textContent='-';return}a.textContent=over(p.pra,l);b.textContent=over(p.pra.slice(-10),l)}
+function ln(id,v){L[id]=v;try{localStorage.setItem('lines',JSON.stringify(L))}catch(e){}res(D.players.find(p=>p.id==id))}
+function draw(){head();const q=$('q').value.toLowerCase();
+let a=D.players.filter(p=>p.gp>=+$('mg').value&&(!$('tm').value||p.team==$('tm').value)&&p.name.toLowerCase().includes(q));
+a.sort((x,y)=>y.avg-x.avg);a=a.slice(0,+$('tp').value||100);
+const g=C[S.k][1];a.sort((x,y)=>{const u=g(x),v=g(y);if(u==null)return 1;if(v==null)return-1;return(u>v?1:u<v?-1:0)*S.d});
+$('b').innerHTML=a.map(p=>{const k=p.l5>=p.avg*1.15?'hot':p.l5<=p.avg*.85?'cold':'';
+return`<tr class="${k}"><td onclick="det(${p.id})"><b>${p.name}</b></td><td><input inputmode="decimal" style="width:52px" value="${L[p.id]??''}" oninput="ln(${p.id},this.value)"></td><td id="s${p.id}"></td><td id="t${p.id}"></td>`+
+C.slice(1).map(c=>'<td>'+(c[2]?c[2](p):f(c[1](p)))+'</td>').join('')+'</tr>'}).join('');a.forEach(res)}
+function det(id){const p=D.players.find(x=>x.id==id),l=parseFloat(L[id]),G=p.games,mx=Math.max(...G.map(x=>x.pra),isNaN(l)?0:l)*1.1,W=340,H=130,bw=W/G.length;
+const bars=G.map((x,i)=>`<rect x="${i*bw+2}" y="${H-x.pra/mx*H}" width="${bw-4}" height="${x.pra/mx*H}" fill="var(--bar)"/>`).join('');
+const ly=isNaN(l)?'':`<line x1="0" x2="${W}" y1="${H-l/mx*H}" y2="${H-l/mx*H}" stroke="#e33" stroke-width="2"/>`;
+$('o').innerHTML=`<p><b>${p.name}</b> (${p.team}) <button onclick="$('o').style.display='none'">Close</button></p><svg viewBox="0 0 ${W} ${H}" width="100%">${bars}${ly}</svg><div class="mu">Last 15 games, oldest to newest${isNaN(l)?'':'; red line = '+l}</div><table><tr><th>Date</th><th>Opp</th><th>H/A</th><th>Min</th><th>PTS</th><th>REB</th><th>AST</th><th>PRA</th></tr>`+
+[...G].reverse().map(x=>`<tr><td>${x.d.slice(5)}</td><td>${x.o}</td><td>${x.h?'H':'A'}</td><td>${x.m}</td><td>${x.p}</td><td>${x.r}</td><td>${x.a}</td><td><b>${x.pra}</b></td></tr>`).join('')+'</table>';$('o').style.display='block'}
+fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('h').textContent='NBA PRA '+d.season;$('u').textContent='Updated '+d.updated;
+[...new Set(d.players.map(p=>p.team))].sort().forEach(t=>$('tm').add(new Option(t,t)));
+['tp','mg','q','tm'].forEach(i=>$(i).addEventListener('input',draw));draw()}).catch(e=>{$('u').textContent='No data yet ('+e+')'});
+</script></body></html>
