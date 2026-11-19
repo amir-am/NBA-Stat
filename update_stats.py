@@ -36,7 +36,10 @@ def fetch_log(season):
 
 def fetch_sched():
     import requests
-    return requests.get(SCHED, timeout=60, headers={"User-Agent": "Mozilla/5.0"}).json()
+    r = requests.get(SCHED, timeout=30, headers={"User-Agent": "Mozilla/5.0", "Referer": "https://www.nba.com/",
+                                                 "Origin": "https://www.nba.com", "Accept": "application/json"})
+    print("NBA schedule:", r.status_code, r.text[:80].replace("\n", " "), file=sys.stderr)
+    return r.json()
 
 
 UA = {"User-Agent": "Mozilla/5.0"}
@@ -89,6 +92,90 @@ def fetch_cdn(sched, path="games_cache.json", budget=720):
         json.dump(cache, f, separators=(",", ":"))
     os.replace(path + ".tmp", path)
     return [r for rows in cache.values() for r in rows]
+
+
+ESPN = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/"
+FIX = {"GS": "GSW", "NY": "NYK", "SA": "SAS", "NO": "NOP", "WSH": "WAS", "UTAH": "UTA"}
+
+
+def getj(url, tries=3):
+    import requests
+
+    def go():
+        r = requests.get(url, timeout=30, headers=UA)
+        print("GET", url[-70:], r.status_code, len(r.content), file=sys.stderr)
+        r.raise_for_status()
+        return r.json()
+    return retry(go, tries)
+
+
+def num(x):
+    try:
+        return float(x)
+    except Exception:
+        return 0.0
+
+
+def fetch_espn(now, path="espn_cache.json", budget=720):
+    from concurrent.futures import ThreadPoolExecutor
+    y = int(season_str(now)[:4])
+    d0, d1 = dt.date(y, 10, 1), now.date() + dt.timedelta(days=10)
+    sb = getj(f"{ESPN}scoreboard?dates={d0:%Y%m%d}-{d1:%Y%m%d}&limit=1000")
+    games, done = [], []
+    for e in sb.get("events", []):
+        if e.get("season", {}).get("type") != 2:
+            continue
+        c = e["competitions"][0]["competitors"]
+        ab = lambda side: FIX.get(ab0 := next(x for x in c if x["homeAway"] == side)["team"]["abbreviation"], ab0)
+        h, aw = ab("home"), ab("away")
+        t = e["date"]
+        ld = (dt.datetime.fromisoformat(t.replace("Z", "+00:00")) - dt.timedelta(hours=6)).date().isoformat()
+        fin = e["status"]["type"]["completed"]
+        games.append({"gameId": "002" + str(e["id"]), "gameStatus": 3 if fin else 1, "gameDateTimeUTC": t,
+                      "homeTeam": {"teamTricode": h}, "awayTeam": {"teamTricode": aw}})
+        if fin:
+            done.append((str(e["id"]), ld, h, aw))
+    sched = {"leagueSchedule": {"gameDates": [{"games": games}]}}
+    cache = json.load(open(path)) if os.path.exists(path) else {}
+    todo = [t for t in done if t[0] not in cache]
+    end = time.time() + budget
+
+    def one(t):
+        eid, ld, h, aw = t
+        if time.time() > end:
+            return eid, None
+        try:
+            j = getj(f"{ESPN}summary?event={eid}", 3)
+            rows = []
+            for tm in j["boxscore"]["players"]:
+                tab = tm["team"]["abbreviation"]
+                tab = FIX.get(tab, tab)
+                home = tab == h
+                mu = f"{tab} vs. {aw}" if home else f"{tab} @ {h}"
+                for grp in tm["statistics"]:
+                    lab = grp["labels"]
+                    ix = {k: lab.index(k) for k in ("MIN", "PTS", "REB", "AST")}
+                    for at in grp["athletes"]:
+                        st_ = at.get("stats") or []
+                        if not st_ or at.get("didNotPlay"):
+                            continue
+                        rows.append(dict(PLAYER_ID=int(at["athlete"]["id"]), PLAYER_NAME=at["athlete"]["displayName"],
+                                         TEAM_ABBREVIATION=tab, GAME_ID="002" + eid, GAME_DATE=ld, MATCHUP=mu,
+                                         MIN=num(st_[ix["MIN"]]), PTS=int(num(st_[ix["PTS"]])),
+                                         REB=int(num(st_[ix["REB"]])), AST=int(num(st_[ix["AST"]]))))
+            return eid, rows
+        except Exception as ex:
+            print("game", eid, "failed:", ex, file=sys.stderr)
+            return eid, None
+    with ThreadPoolExecutor(6) as ex:
+        for eid, rows in ex.map(one, todo):
+            if rows:
+                cache[eid] = rows
+    print(f"espn cache: {len(cache)} games, {len(todo)} were new")
+    with open(path + ".tmp", "w") as f:
+        json.dump(cache, f, separators=(",", ":"))
+    os.replace(path + ".tmp", path)
+    return sched, [r for rows in cache.values() for r in rows]
 
 
 def build(rows, sched, season, now):
@@ -154,20 +241,22 @@ def build(rows, sched, season, now):
 def main():
     now = dt.datetime.now(dt.timezone.utc)
     season = season_str(now)
+    sched, rows = {}, []
     try:
-        sched = retry(fetch_sched, 3)
-    except Exception as e:
-        sys.exit(f"ERROR: NBA schedule unreachable, data.json left unchanged ({e})")
-    rows = []
-    try:
+        sched = retry(fetch_sched, 2)
         rows = fetch_cdn(sched)
     except Exception as e:
-        print("CDN route failed:", e, file=sys.stderr)
+        print("NBA CDN route failed:", e, file=sys.stderr)
+    if not rows:
+        try:
+            sched, rows = fetch_espn(now)
+        except Exception as e:
+            print("ESPN route failed:", e, file=sys.stderr)
     if not rows:
         try:
             rows = retry(lambda: fetch_log(season), 2)
         except Exception as e:
-            sys.exit(f"ERROR: NBA.com unreachable, data.json left unchanged ({e})")
+            sys.exit(f"ERROR: no data source reachable, data.json left unchanged ({e})")
     if not rows:
         sys.exit("ERROR: no game data yet for " + season + "; data.json left unchanged")
     out = build(rows, sched, season, now)
