@@ -198,6 +198,17 @@ def fetch_espn(now, path="espn_cache.json", budget=720):
 SDV = "https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_nba_player_boxscores/player_box_{}.csv"
 
 
+def et_date(d, g):
+    t = g(d, "game_date_time") or ""
+    if t.endswith("Z") or "+00" in t:
+        try:
+            from zoneinfo import ZoneInfo
+            return dt.datetime.fromisoformat(t.replace("Z", "+00:00")).astimezone(ZoneInfo("America/New_York")).date().isoformat()
+        except Exception:
+            pass
+    return str(g(d, "game_date"))[:10]
+
+
 def parse_sdv(text):
     import csv, io
     rd = list(csv.DictReader(io.StringIO(text.lstrip("\ufeff"))))
@@ -227,7 +238,7 @@ def parse_sdv(text):
             continue
         home = str(g_(d, "home_away") or "").lower() == "home"
         rows.append(dict(PLAYER_ID=int(float(pid)), PLAYER_NAME=g_(d, "athlete_display_name", "athlete_short_name"),
-                         TEAM_ABBREVIATION=tm, GAME_ID="002" + str(gid), GAME_DATE=str(g_(d, "game_date"))[:10],
+                         TEAM_ABBREVIATION=tm, GAME_ID="002" + str(gid), GAME_DATE=et_date(d, g_),
                          MATCHUP=f"{tm} vs. {op}" if home else f"{tm} @ {op}", MIN=mins,
                          PTS=int(num(g_(d, "points"))), REB=int(num(g_(d, "rebounds"))),
                          AST=int(num(g_(d, "assists")))))
@@ -314,7 +325,7 @@ def build(rows, sched, season, now):
             id=pid, name=g[0]["name"], team=t, gp=len(g), avg=m(v), med=st.median(v),
             f90=floor_pct(v, 90), f80=floor_pct(v, 80), f70=floor_pct(v, 70),
             l5=m(v[-5:]), l10=m(v[-10:]), min=m([x["min"] for x in g]), l5min=m([x["min"] for x in g[-5:]]),
-            sd=round(st.pstdev(v), 2), mn=min(v), mx=max(v),
+            sd=round(st.stdev(v), 2), mn=min(v), mx=max(v),
             home=m([x["pra"] for x in g if x["home"]]), away=m([x["pra"] for x in g if not x["home"]]),
             b2b=sub([x["pra"] for x, r in zip(g, rs) if r == 0]),
             r2=sub([x["pra"] for x, r in zip(g, rs) if r is not None and r >= 2]),
