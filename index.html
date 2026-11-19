@@ -1,60 +1,89 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><title>NBA PRA</title>
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0e1013">
+<title>PRA Props</title>
 <style>
-:root{color-scheme:light dark;--bg:#fff;--fg:#111;--mu:#666;--bd:#ddd;--hot:#d6f0d6;--cold:#f8d7d7;--hd:#f0f0f0;--bar:#4a7bd0}
-@media(prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--mu:#999;--bd:#333;--hot:#1c4a25;--cold:#5a2323;--hd:#222;--bar:#7aa2f0}}
-body{margin:0;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);background:var(--bg);color:var(--fg);font:14px -apple-system,system-ui,sans-serif}
-.p{padding:8px 10px}.mu{color:var(--mu);font-size:12px}
-input,select{font:inherit;padding:4px;margin:2px;background:var(--bg);color:var(--fg);border:1px solid var(--bd);border-radius:6px}
-#w{overflow:auto;max-height:68vh}table{border-collapse:separate;border-spacing:0;white-space:nowrap}
-th,td{padding:5px 8px;border-bottom:1px solid var(--bd);text-align:right}
-th{position:sticky;top:0;background:var(--hd);z-index:2;cursor:pointer}
-tr{background:var(--bg)}tr.hot{background:var(--hot)}tr.cold{background:var(--cold)}
-td:first-child,th:first-child{position:sticky;left:0;text-align:left;background:inherit;z-index:3}
-th:first-child{background:var(--hd);z-index:4}
-#o{position:fixed;inset:0;background:var(--bg);overflow:auto;padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom);display:none;z-index:9}
-#o td,#o th{text-align:center}
+:root{color-scheme:light dark;--bg:#f5f6f8;--card:#fff;--fg:#14161a;--mu:#7b8190;--bd:#e7e9ee;--ac:#4f46e5;--up:#0f9d58;--dn:#d93025;--upb:#e3f6ea;--dnb:#fde8e6;--sub:#f0f1f5}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1013;--card:#171a1f;--fg:#eceef2;--mu:#8b93a1;--bd:#262a31;--ac:#8b85ff;--up:#4ade80;--dn:#f87171;--upb:#12301f;--dnb:#3a1a1a;--sub:#1f2329}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.35 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.top{padding:16px 16px 8px}h1{margin:0;font-size:24px;letter-spacing:-.5px}.mu{color:var(--mu);font-size:12px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;padding:8px 16px}
+.bar input,.bar select{font:inherit;font-size:15px;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:9px 12px}
+#q{flex:1 1 100%}.bar label{display:flex;align-items:center;gap:6px;color:var(--mu);font-size:13px}.bar label input{width:64px}
+.card{margin:4px 12px 12px;background:var(--card);border:1px solid var(--bd);border-radius:16px;overflow:hidden}
+#w{overflow:auto;max-height:72vh}table{border-collapse:separate;border-spacing:0;white-space:nowrap;font-variant-numeric:tabular-nums}
+th,td{padding:9px 11px;text-align:right;border-bottom:1px solid var(--bd)}
+th{position:sticky;top:0;z-index:2;background:var(--card);font-size:11px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.4px}
+th.sb{cursor:pointer}th.on{color:var(--ac)}
+td:first-child,th:first-child{position:sticky;left:0;z-index:3;text-align:left;background:var(--card);border-right:1px solid var(--bd)}
+th:first-child{z-index:4}.n{font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+tr:last-child td{border-bottom:0}.fl{background:var(--sub)}
+.ln{width:58px;font:inherit;text-align:center;color:var(--fg);background:var(--sub);border:1px solid transparent;border-radius:9px;padding:6px}.ln:focus{outline:0;border-color:var(--ac)}
+.pl{padding:3px 8px;border-radius:99px;font-weight:600}.pl.up{background:var(--upb);color:var(--up)}.pl.dn{background:var(--dnb);color:var(--dn)}
+.up{color:var(--up)}.dn{color:var(--dn)}b.up,b.dn{font-weight:600}.rk{font-size:12px;font-weight:600}
+.note{padding:0 16px 16px;color:var(--mu);font-size:12px}
+#o{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;z-index:9}
+.sh{background:var(--bg);width:100%;max-height:90vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+.hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.hd b{font-size:20px}
+.x{border:0;background:var(--sub);color:var(--fg);border-radius:99px;width:32px;height:32px;font-size:16px}
+.g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.t{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 10px}.t div:first-child{color:var(--mu);font-size:11px}.t div:last-child{font-weight:600}
+.sh table{width:100%;background:var(--card);border-radius:12px}.sh th,.sh td{text-align:center;padding:7px 4px}.sh th{position:static}
 </style></head><body>
-<div class="p"><b id="h">NBA PRA</b> <span class="mu" id="u"></span>
-<div><label>Top <input id="tp" type="number" value="100" size="3" style="width:56px"></label>
-<label>Min GP <input id="mg" type="number" value="10" style="width:50px"></label>
+<div class="top"><h1 id="h">PRA Props</h1><div class="mu" id="u">Loading…</div></div>
+<div class="bar"><input id="q" placeholder="Search player">
 <select id="tm"><option value="">All teams</option></select>
-<input id="q" placeholder="Search name"></div>
-<div class="mu">Past stats, not predictions. Early-season samples are small and unreliable. Green row = last 5 avg 15%+ above season avg; red = 15%+ below. Floor 90% = PRA reached in at least 90% of games. Injury status is not included.</div></div>
-<div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div>
-<div id="o"></div>
+<label>Top <input id="tp" type="number" value="100"></label><label>Min GP <input id="mg" type="number" value="10"></label></div>
+<div class="card"><div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div></div>
+<div class="note">Past results, not predictions. Early-season samples are small. Floor 90 = PRA reached in at least 90% of games. L5 is green or red when 15%+ above or below the season average. Opp allowed: PRA the next opponent gives up per game (#1 = most). Tap a name for details.</div>
+<div id="o" onclick="if(event.target==this)this.style.display='none'"><div class="sh" id="sh"></div></div>
 <script>
 const $=i=>document.getElementById(i);
-let D,T,S={k:2,d:-1},L={};
+let D,T,S={k:4,d:-1},L={};
 try{L=JSON.parse(localStorage.getItem('lines')||'{}')}catch(e){}
-const over=(a,l)=>{const c=a.filter(v=>v>l).length;return c+'/'+a.length+' ('+Math.round(100*c/a.length)+'%)'};
-const f=(x,n=1)=>x==null?'n/a':(+x).toFixed(n);
+const f=(x,n=1)=>x==null?'–':(+x).toFixed(n);
+const cnt=(a,l)=>a.filter(v=>v>l).length;
+const pc=(a,l)=>{const c=cnt(a,l),n=a.length,p=Math.round(100*c/n);return`<b class="${p>=60?'up':p<=40?'dn':''}">${p}%</b> <span class="mu">${c}/${n}</span>`};
 const O=p=>p.next&&T[p.next.opp];
-const C=[['Player',p=>p.name],['Team',p=>p.team,p=>p.team],['GP',p=>p.gp,p=>p.gp],['Avg',p=>p.avg],['Med',p=>p.med],
-['F90',p=>p.f90],['F80',p=>p.f80],['F70',p=>p.f70],['L5',p=>p.l5],['L10',p=>p.l10],['Min',p=>p.min],['L5 Min',p=>p.l5min],
-['SD',p=>p.sd],['Low',p=>p.mn,p=>p.mn],['High',p=>p.mx,p=>p.mx],['Home',p=>p.home],['Away',p=>p.away],
-['B2B',p=>p.b2b&&p.b2b.avg],['2+ rest',p=>p.r2&&p.r2.avg],
-['Next',p=>p.next&&p.next.opp,p=>p.next?(p.next.home?'vs ':'@ ')+p.next.opp:'n/a'],
-['Opp allowed (rank)',p=>O(p)&&O(p).allowed,p=>O(p)?f(O(p).allowed)+' (#'+O(p).rank+')':'n/a']];
-function head(){$('th').innerHTML='<tr>'+C.map((c,i)=>'<th onclick="srt('+i+')">'+c[0]+(S.k==i?(S.d<0?' ▼':' ▲'):'')+'</th>'+(i==0?'<th>Line</th><th>Over: season</th><th>Over: L10</th>':'')).join('')+'</tr>'}
-function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:i<2?1:-1};draw()}
+const tr=p=>p.l5>=p.avg*1.15?'up':p.l5<=p.avg*.85?'dn':'';
+const C=[
+{l:'Player',g:p=>p.name,r:p=>`<div class="n">${p.name}</div><div class="mu">${p.team}</div>`},
+{l:'Line',r:p=>`<input class="ln" inputmode="decimal" placeholder="–" value="${L[p.id]??''}" oninput="ln(${p.id},this.value)">`},
+{l:'Over',r:p=>`<span id="s${p.id}"></span>`},
+{l:'Over L10',r:p=>`<span id="t${p.id}"></span>`},
+{l:'Avg',g:p=>p.avg,r:p=>`<b>${f(p.avg)}</b>`},
+{l:'Median',g:p=>p.med,r:p=>f(p.med)},
+{l:'L5',g:p=>p.l5,r:p=>`<span class="pl ${tr(p)}">${f(p.l5)}</span>`},
+{l:'L10',g:p=>p.l10,r:p=>f(p.l10)},
+{l:'Floor 90',g:p=>p.f90,r:p=>p.f90,c:'fl'},{l:'Floor 80',g:p=>p.f80,r:p=>p.f80,c:'fl'},{l:'Floor 70',g:p=>p.f70,r:p=>p.f70,c:'fl'},
+{l:'GP',g:p=>p.gp,r:p=>p.gp},{l:'Min',g:p=>p.min,r:p=>f(p.min)},
+{l:'Next',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> ${p.next.opp}`:'–'},
+{l:'Opp allowed',g:p=>O(p)&&O(p).allowed,r:p=>O(p)?`${f(O(p).allowed)} <span class="rk ${O(p).rank<=10?'up':O(p).rank>=21?'dn':''}">#${O(p).rank}</span>`:'–'}];
+function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==13)?1:-1};draw()}
 function res(p){const l=parseFloat(L[p.id]),a=$('s'+p.id),b=$('t'+p.id);if(!a)return;
-if(isNaN(l)){a.textContent=b.textContent='-';return}a.textContent=over(p.pra,l);b.textContent=over(p.pra.slice(-10),l)}
+a.innerHTML=b.innerHTML=isNaN(l)?'<span class="mu">–</span>':'';if(!isNaN(l)){a.innerHTML=pc(p.pra,l);b.innerHTML=pc(p.pra.slice(-10),l)}}
 function ln(id,v){L[id]=v;try{localStorage.setItem('lines',JSON.stringify(L))}catch(e){}res(D.players.find(p=>p.id==id))}
-function draw(){head();const q=$('q').value.toLowerCase();
+function draw(){
+$('th').innerHTML='<tr>'+C.map((c,i)=>`<th class="${c.g?'sb':''} ${S.k==i?'on':''} ${c.c||''}"${c.g?` onclick="srt(${i})"`:''}>${c.l}${S.k==i?(S.d<0?' ↓':' ↑'):''}</th>`).join('')+'</tr>';
+const q=$('q').value.toLowerCase();
 let a=D.players.filter(p=>p.gp>=+$('mg').value&&(!$('tm').value||p.team==$('tm').value)&&p.name.toLowerCase().includes(q));
 a.sort((x,y)=>y.avg-x.avg);a=a.slice(0,+$('tp').value||100);
-const g=C[S.k][1];a.sort((x,y)=>{const u=g(x),v=g(y);if(u==null)return 1;if(v==null)return-1;return(u>v?1:u<v?-1:0)*S.d});
-$('b').innerHTML=a.map(p=>{const k=p.l5>=p.avg*1.15?'hot':p.l5<=p.avg*.85?'cold':'';
-return`<tr class="${k}"><td onclick="det(${p.id})"><b>${p.name}</b></td><td><input inputmode="decimal" style="width:52px" value="${L[p.id]??''}" oninput="ln(${p.id},this.value)"></td><td id="s${p.id}"></td><td id="t${p.id}"></td>`+
-C.slice(1).map(c=>'<td>'+(c[2]?c[2](p):f(c[1](p)))+'</td>').join('')+'</tr>'}).join('');a.forEach(res)}
-function det(id){const p=D.players.find(x=>x.id==id),l=parseFloat(L[id]),G=p.games,mx=Math.max(...G.map(x=>x.pra),isNaN(l)?0:l)*1.1,W=340,H=130,bw=W/G.length;
-const bars=G.map((x,i)=>`<rect x="${i*bw+2}" y="${H-x.pra/mx*H}" width="${bw-4}" height="${x.pra/mx*H}" fill="var(--bar)"/>`).join('');
-const ly=isNaN(l)?'':`<line x1="0" x2="${W}" y1="${H-l/mx*H}" y2="${H-l/mx*H}" stroke="#e33" stroke-width="2"/>`;
-$('o').innerHTML=`<p><b>${p.name}</b> (${p.team}) <button onclick="$('o').style.display='none'">Close</button></p><svg viewBox="0 0 ${W} ${H}" width="100%">${bars}${ly}</svg><div class="mu">Last 15 games, oldest to newest${isNaN(l)?'':'; red line = '+l}</div><table><tr><th>Date</th><th>Opp</th><th>H/A</th><th>Min</th><th>PTS</th><th>REB</th><th>AST</th><th>PRA</th></tr>`+
-[...G].reverse().map(x=>`<tr><td>${x.d.slice(5)}</td><td>${x.o}</td><td>${x.h?'H':'A'}</td><td>${x.m}</td><td>${x.p}</td><td>${x.r}</td><td>${x.a}</td><td><b>${x.pra}</b></td></tr>`).join('')+'</table>';$('o').style.display='block'}
-fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('h').textContent='NBA PRA '+d.season;$('u').textContent='Updated '+d.updated+(d.through?' · games through '+d.through:'');
+const g=C[S.k].g;a.sort((x,y)=>{const u=g(x),v=g(y);if(u==null)return 1;if(v==null)return-1;return(u>v?1:u<v?-1:0)*S.d});
+$('b').innerHTML=a.map(p=>'<tr>'+C.map((c,i)=>`<td class="${c.c||''}"${i==0?` onclick="det(${p.id})"`:''}>${c.r(p)}</td>`).join('')+'</tr>').join('');
+a.forEach(res)}
+function det(id){const p=D.players.find(x=>x.id==id),l=parseFloat(L[id]),G=p.games,has=!isNaN(l),mx=Math.max(...G.map(x=>x.pra),has?l:0)*1.12,W=340,H=140,bw=W/G.length;
+const bars=G.map((x,i)=>`<rect x="${i*bw+3}" y="${H-x.pra/mx*H}" width="${bw-6}" height="${x.pra/mx*H}" rx="3" fill="${has?(x.pra>l?'var(--up)':'var(--dn)'):'var(--ac)'}" opacity=".85"/>`).join('');
+const ly=has?`<line x1="0" x2="${W}" y1="${H-l/mx*H}" y2="${H-l/mx*H}" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/>`:'';
+const tl=(a,b)=>`<div class="t"><div>${a}</div><div>${b}</div></div>`,sb=s=>s?f(s.avg)+' ('+s.n+')':'n/a';
+$('sh').innerHTML=`<div class="hd"><div><b>${p.name}</b><div class="mu">${p.team} · ${p.gp} games</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div>
+<div class="g">${tl('Std dev',f(p.sd))}${tl('Low – High',p.mn+' – '+p.mx)}${tl('L5 minutes',f(p.l5min))}${tl('Home avg',f(p.home))}${tl('Away avg',f(p.away))}${tl('Back-to-back',sb(p.b2b))}${tl('2+ days rest',sb(p.r2))}${tl('Floor 90 / 80',p.f90+' / '+p.f80)}${tl('Floor 70',p.f70)}</div>
+<svg viewBox="0 0 ${W} ${H}" width="100%">${bars}${ly}</svg><div class="mu" style="margin:4px 0 12px">Last ${G.length} games, oldest to newest${has?' · dashed line = '+l:''}</div>
+<table><tr class="mu"><th>Date</th><th>Opp</th><th>Min</th><th>PTS</th><th>REB</th><th>AST</th><th>PRA</th></tr>`+
+[...G].reverse().map(x=>`<tr><td>${x.d.slice(5)}</td><td>${x.h?'vs':'@'} ${x.o}</td><td>${x.m}</td><td>${x.p}</td><td>${x.r}</td><td>${x.a}</td><td><b>${x.pra}</b></td></tr>`).join('')+'</table>';
+$('o').style.display='flex'}
+fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('h').textContent='PRA Props · '+d.season;
+$('u').textContent='Updated '+d.updated+(d.through?' · games through '+d.through:'');
 [...new Set(d.players.map(p=>p.team))].sort().forEach(t=>$('tm').add(new Option(t,t)));
 ['tp','mg','q','tm'].forEach(i=>$(i).addEventListener('input',draw));draw()}).catch(e=>{$('u').textContent='No data yet ('+e+')'});
 </script></body></html>
