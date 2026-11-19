@@ -120,9 +120,26 @@ def fetch_espn(now, path="espn_cache.json", budget=720):
     from concurrent.futures import ThreadPoolExecutor
     y = int(season_str(now)[:4])
     d0, d1 = dt.date(y, 10, 1), now.date() + dt.timedelta(days=10)
-    sb = getj(f"{ESPN}scoreboard?dates={d0:%Y%m%d}-{d1:%Y%m%d}&limit=1000")
+    days = [d0 + dt.timedelta(n) for n in range((d1 - d0).days + 1)]
+
+    def day(d):
+        try:
+            return getj(f"{ESPN}scoreboard?dates={d:%Y%m%d}", 2).get("events", [])
+        except Exception as ex:
+            print("scoreboard", d, "failed:", ex, file=sys.stderr)
+            return None
+    with ThreadPoolExecutor(6) as ex:
+        res = list(ex.map(day, days))
+    if all(r is None for r in res):
+        raise RuntimeError("ESPN scoreboard unreachable")
+    seen, events = set(), []
+    for r in res:
+        for e in r or []:
+            if e["id"] not in seen:
+                seen.add(e["id"])
+                events.append(e)
     games, done = [], []
-    for e in sb.get("events", []):
+    for e in events:
         if e.get("season", {}).get("type") != 2:
             continue
         c = e["competitions"][0]["competitors"]
@@ -176,6 +193,76 @@ def fetch_espn(now, path="espn_cache.json", budget=720):
         json.dump(cache, f, separators=(",", ":"))
     os.replace(path + ".tmp", path)
     return sched, [r for rows in cache.values() for r in rows]
+
+
+SDV = "https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_nba_player_boxscores/player_box_{}.csv"
+
+
+def parse_sdv(text):
+    import csv, io
+    rd = list(csv.DictReader(io.StringIO(text.lstrip("\ufeff"))))
+    if not rd:
+        return []
+    print("CSV rows:", len(rd), "columns:", list(rd[0].keys())[:70], file=sys.stderr)
+    g = lambda d, *ks: next((d[k] for k in ks if d.get(k) not in (None, "", "NA")), None)
+    fx = lambda a: FIX.get(a, a)
+    seen, base, teams = set(), [], defaultdict(set)
+    for d in rd:
+        if str(g(d, "season_type")) not in ("2", "2.0"):
+            continue
+        if str(g(d, "did_not_play") or "").upper() in ("TRUE", "T", "1"):
+            continue
+        mins = num(g(d, "minutes"))
+        pid, gid = g(d, "athlete_id"), g(d, "game_id")
+        if mins <= 0 or not pid or (gid, pid) in seen:
+            continue
+        seen.add((gid, pid))
+        tm = fx(g(d, "team_abbreviation"))
+        teams[gid].add(tm)
+        base.append((d, g, gid, pid, tm, mins))
+    rows = []
+    for d, g_, gid, pid, tm, mins in base:
+        op = next((t for t in teams[gid] if t != tm), None)
+        if not op:
+            continue
+        home = str(g_(d, "home_away") or "").lower() == "home"
+        rows.append(dict(PLAYER_ID=int(float(pid)), PLAYER_NAME=g_(d, "athlete_display_name", "athlete_short_name"),
+                         TEAM_ABBREVIATION=tm, GAME_ID="002" + str(gid), GAME_DATE=str(g_(d, "game_date"))[:10],
+                         MATCHUP=f"{tm} vs. {op}" if home else f"{tm} @ {op}", MIN=mins,
+                         PTS=int(num(g_(d, "points"))), REB=int(num(g_(d, "rebounds"))),
+                         AST=int(num(g_(d, "assists")))))
+    return rows
+
+
+def fetch_sdv(now):
+    import requests
+    yr = int(season_str(now)[:4]) + 1
+
+    def go():
+        r = requests.get(SDV.format(yr), timeout=120, headers=UA)
+        print("GET player_box", yr, r.status_code, len(r.content), file=sys.stderr)
+        r.raise_for_status()
+        return r.content.decode("utf-8", "replace")
+    return parse_sdv(retry(go, 3))
+
+
+def fetch_next(now):
+    games = []
+    for n in range(8):
+        d = now.date() + dt.timedelta(n)
+        try:
+            evs = getj(f"{ESPN}scoreboard?dates={d:%Y%m%d}", 2).get("events", [])
+        except Exception as ex:
+            print("next-game lookup failed:", d, ex, file=sys.stderr)
+            continue
+        for e in evs:
+            if e.get("season", {}).get("type") != 2 or e["status"]["type"]["completed"]:
+                continue
+            c = e["competitions"][0]["competitors"]
+            ab = {x["homeAway"]: FIX.get(x["team"]["abbreviation"], x["team"]["abbreviation"]) for x in c}
+            games.append({"gameId": "002" + str(e["id"]), "gameStatus": 1, "gameDateTimeUTC": e["date"],
+                          "homeTeam": {"teamTricode": ab["home"]}, "awayTeam": {"teamTricode": ab["away"]}})
+    return {"leagueSchedule": {"gameDates": [{"games": games}]}}
 
 
 def build(rows, sched, season, now):
@@ -235,7 +322,8 @@ def build(rows, sched, season, now):
             games=[dict(d=x["date"], o=x["opp"], h=x["home"], m=round(x["min"]), p=x["pts"], r=x["reb"],
                         a=x["ast"], pra=x["pra"]) for x in g[-15:]]))
     P.sort(key=lambda p: -p["avg"])
-    return {"season": season, "updated": now.strftime("%Y-%m-%d %H:%M UTC"), "players": P[:200], "teams": teams}
+    return {"season": season, "updated": now.strftime("%Y-%m-%d %H:%M UTC"), "players": P[:200], "teams": teams,
+            "through": max((x["date"] for x in R), default=None)}
 
 
 def main():
@@ -243,15 +331,22 @@ def main():
     season = season_str(now)
     sched, rows = {}, []
     try:
-        sched = retry(fetch_sched, 2)
-        rows = fetch_cdn(sched)
+        rows = fetch_sdv(now)
+        if rows:
+            sched = fetch_next(now)
     except Exception as e:
-        print("NBA CDN route failed:", e, file=sys.stderr)
+        print("SportsDataverse route failed:", e, file=sys.stderr)
     if not rows:
         try:
             sched, rows = fetch_espn(now)
         except Exception as e:
             print("ESPN route failed:", e, file=sys.stderr)
+    if not rows:
+        try:
+            sched = retry(fetch_sched, 2)
+            rows = fetch_cdn(sched)
+        except Exception as e:
+            print("NBA CDN route failed:", e, file=sys.stderr)
     if not rows:
         try:
             rows = retry(lambda: fetch_log(season), 2)
