@@ -122,11 +122,12 @@ const ha=p.next.home?p.home:p.away;if(ha!=null)adj((p.next.home?'home':'away')+'
 const pz=cdf((mu-l)/sd),over=p.pra.filter(v=>v>l).length,pe=(over+5)/(n+10),pr=.6*pz+.4*pe;
 w.push('Expected PRA '+f(mu)+' vs line '+l+', typical swing '+f(sd));
 w.push('History: over this line in '+over+' of '+n+' games ('+Math.round(100*over/n)+'%)');
-return{v:pr>=.56?'Over':pr<=.44?'Under':'Neither',p:pr,w}}
+const gz=(mu-l)/sd;w.push('Rule: Over needs my estimate above the line and his season avg above it; Under is the reverse');
+return{v:(pr>=.54&&p.avg>=l&&gz>=.15)?'Over':(pr<=.46&&p.avg<=l&&gz<=-.15)?'Under':'Neither',p:pr,w}}
 const lc=x=>x=='Over'?'up':x=='Under'?'dn':'';
-const lt=r=>r.v=='Neither'?'-':r.v+' '+Math.round(100*(r.v=='Over'?r.p:1-r.p))+'%';
+const lt=r=>r.v=='Neither'?'-':r.v;
 function lb(r,l){if(!r)return'<div class="hp" style="--c:var(--mu)"><span>Type a line in the table to see my lean for this player.</span></div>';
-return`<div class="hp" style="--c:var(--${r.v=='Over'?'up':r.v=='Under'?'dn':'mu'})"><b>Lean at ${l}: ${r.v=='Neither'?'No lean':lt(r)}</b><span>${r.w.join('<br>')}</span></div>`}
+return`<div class="hp" style="--c:var(--${r.v=='Over'?'up':r.v=='Under'?'dn':'mu'})"><b>Lean at ${l}: ${r.v=='Neither'?'No lean':r.v}</b><span>${r.w.join('<br>')}</span></div>`}
 function res(p){const l=parseFloat(lv(p)),a=$('s'+p.id),b=$('t'+p.id),c=$('l'+p.id);if(!a)return;
 if(isNaN(l)){a.innerHTML=b.innerHTML=c.innerHTML='<span class="mu">–</span>'}else{a.innerHTML=pc(p.pra,l);b.innerHTML=pc(p.pra.slice(-5),l);const r=lean(p,l);c.innerHTML=`<span class="ls ${lc(r.v)}">${lt(r)}</span>`}}
 function ln(id,v){L[id]=v;try{localStorage.setItem('lines',JSON.stringify(L))}catch(e){}res(D.players.find(p=>p.id==id))}
@@ -154,8 +155,8 @@ ${lb(ls,l)}
 $('o').style.display='flex'}
 function help(){
 const I=[['--t','Player','Rank number, a colored team badge, short name and games played. Tap the name for details: last 15 games, a chart with your line, std dev, home and away averages, back-to-back and rested averages, last 5 minutes, floors and the Lean breakdown.'],
-['--t','Line, Over, Over L5','Lines are filled in automatically when available (dashed box). Otherwise, or to change one, type a line (for example 38.5). Over is how often he went over it this season, and Over L5 how often in his last 5 games. 60% 3/5 means he cleared it in 3 of his last 5. Green is 60% or more, red is 40% or less. Your lines are saved on your phone.'],
-['--t','Lean (my suggestion)','Shows Over or Under with a rough chance, or - when it is too close to call. I estimate his PRA from a mix of his season, last 10 and last 5 averages, then adjust for his minutes trend, the opponent, a back-to-back and home or away. I compare that with your line using how much he normally swings (std dev), and blend in how often he went over this line this season. 56% or more is Over, 44% or less is Under. The percentage is a rough estimate from past games, not a true probability. It does not know about injuries or lineup changes. Tap a name to see how I got the number.'],
+['--t','Line, Over, Over L5','Type the sportsbook line for a player (for example 38.5). Lines can only fill in automatically if a free Odds API key is set up in your repo. Over is how often he went over it this season, and Over L5 how often in his last 5 games. 60% 3/5 means he cleared it in 3 of his last 5. Green is 60% or more, red is 40% or less. Your lines are saved on your phone.'],
+['--t','Lean (my suggestion)','Shows Over or Under once you type a line, or - when it is too close to call. I estimate his PRA from a mix of his season, last 10 and last 5 averages, adjusted for his minutes trend, the opponent, a back-to-back and home or away. I compare that with your line using how much he normally swings (std dev) and how often he went over this line. I only say Over when my estimate and his season average are both clearly above the line, and Under when both are clearly below. It does not know about injuries or lineup changes. Tap a name to see how I got it.'],
 ['--a','Avg','His mean PRA over the games he played this season.'],
 ['--f','L5 and Last 5 bars','L5 is his average over the last 5 games. The small bars show each of those games: green at or above his season average, red below, dashed line is the average.'],
 ['--l','Floor 90 and Floor 80','The PRA he reached or beat in at least 90% or 80% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
@@ -169,8 +170,8 @@ I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</
 $('o').style.display='flex'}
 fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('se').textContent='NBA regular season '+d.season;
 $('ch').innerHTML=`<span>Updated ${et(d.updated)}</span>`;
-$('nt').textContent+=d.lines_source?' Lines are filled in automatically from '+d.lines_source+' ('+d.lines_count+' players) and may differ from other sportsbooks. A dashed box is an automatic line. Type over it to change it; your typed lines are saved.':(d.lines_status?' Automatic lines are unavailable right now ('+d.lines_status+'). You can type lines yourself.':'');
-if(!d.lines_source){const b=$('lb');b.style.display='block';b.textContent=d.lines_status?'Automatic lines are not available: '+d.lines_status:'This data file has no line information, so update_stats.py in your repo is probably an old version. Upload the newest update_stats.py and run the workflow.'}
+if(d.lines_source)$('nt').textContent+=' Lines are filled in automatically from '+d.lines_source+' ('+d.lines_count+' players). A dashed box is an automatic line. Type over it to change it; your typed lines are saved.';
+if(!d.lines_source&&d.lines_status){const b=$('lb');b.style.display='block';b.textContent='Automatic lines are not available: '+d.lines_status}
 TODAY=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
 const pt={};d.players.forEach(p=>{if(plays(p))pt[p.team]=1});
 const sel=$('tm');[...new Set(d.players.map(p=>p.team))].sort().forEach(t=>sel.add(new Option(t+(pt[t]?' 🏀':''),t)));
