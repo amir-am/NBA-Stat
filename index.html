@@ -55,10 +55,11 @@ tr:last-child td{border-bottom:0}
 .hero{position:relative}.hb{position:absolute;top:calc(env(safe-area-inset-top) + 22px);right:16px;margin:0;white-space:nowrap}
 .ls{display:inline-block;min-width:66px;text-align:center;padding:3px 10px;border-radius:99px;font-weight:700;background:var(--sub);color:var(--mu)}.ls.up{background:var(--upb);color:var(--up)}.ls.dn{background:var(--dnb);color:var(--dn)}
 .chips{position:absolute;top:calc(env(safe-area-inset-top) + 62px);right:16px;margin:0}.chips span{font-size:11px;white-space:nowrap}.sea{max-width:50%}
+.lg{flex:none;width:30px;height:30px;object-fit:contain}@media(prefers-color-scheme:dark){.lg{background:#fff;border-radius:50%;padding:3px}}
 </style></head><body>
 <div class="hero"><h1>PRA Props</h1><div class="sea" id="se">Loading…</div><div class="chips" id="ch"></div><button class="hb" onclick="help()">Help</button><input id="q" placeholder="Search a player"></div>
 <div class="bar">
-<select id="tm"><option value="">All teams</option></select><button class="chip" id="td" onclick="today()">Playing today</button><label>Top <input id="tp" type="number" value="50"></label><label>Min games <input id="mg" type="number" value="10"></label></div>
+<select id="tm"><option value="">Teams</option></select><button class="chip" id="td" onclick="today()">Playing today</button><label>Top <input id="tp" type="number" value="50"></label><label>Min games <input id="mg" type="number" value="10"></label></div>
 <div class="panel"><div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div><div id="em" class="mu" style="padding:14px 16px"></div></div>
 <div class="note">These are past results, not predictions, and small samples early in the season are unreliable. Floor 90 is the PRA a player reached in at least 90% of games. Opp allowed is the PRA the next opponent gives up per game (#1 gives up the most). Tap a name for full details.</div>
 <div id="o" onclick="if(event.target==this)this.style.display='none'"><div class="sh" id="sh"></div></div>
@@ -68,6 +69,9 @@ let D,T,S={k:5,d:-1},L={},TM='',TD=false,TODAY='';
 try{L=JSON.parse(localStorage.getItem('lines')||'{}')}catch(e){}
 const et=s=>{try{const d=new Date(s.replace(' UTC','Z').replace(' ','T'));return d.toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET'}catch(e){return s}};
 const sn=s=>{const a=String(s||'').trim().split(/\s+/);return a.length<2||/\./.test(a[0])?s:a[0][0]+'. '+a.slice(1).join(' ')};
+const LG={GSW:'gs',NYK:'ny',SAS:'sa',NOP:'no',UTA:'utah',WAS:'wsh'};
+const logo=t=>`<img class="lg" alt="${t}" src="https://a.espncdn.com/i/teamlogos/nba/500/${LG[t]||String(t).toLowerCase()}.png" onerror="fb(this)">`;
+function fb(i){const t=i.alt;i.outerHTML=`<div class="av" style="background:hsl(${hue(t)} 72% 46%)">${t}</div>`}
 const f=(x,n=1)=>x==null?'–':(+x).toFixed(n);
 const hue=s=>[...String(s||'?')].reduce((a,c)=>a*31+c.charCodeAt(0),7)%360;
 const pc=(a,l)=>{const c=a.filter(v=>v>l).length,n=a.length,p=Math.round(100*c/n);return`<span class="pc ${p>=60?'up':p<=40?'dn':''}">${p}% <small>${c}/${n}</small></span>`};
@@ -80,7 +84,7 @@ const O=p=>p.next&&T[p.next.opp];
 const tr=p=>p.l5>=p.avg*1.15?'up':p.l5<=p.avg*.85?'dn':'';
 const spark=p=>{const v=p.pra.slice(-5),m=Math.max(...v,p.avg)*1.08;return`<svg width="70" height="26" viewBox="0 0 70 26">`+v.map((x,i)=>`<rect x="${i*14}" y="${26-x/m*26}" width="11" height="${x/m*26}" rx="3" fill="var(${x>=p.avg?'--up':'--dn'})"/>`).join('')+`<line x1="0" x2="70" y1="${26-p.avg/m*26}" y2="${26-p.avg/m*26}" stroke="var(--fg)" stroke-width=".8" stroke-dasharray="2 2" opacity=".55"/></svg>`};
 const C=[
-{l:'Player',g:p=>p.name,r:(p,i)=>`<div class="who"><span class="no">${i+1}</span><div class="av" style="background:hsl(${hue(p.team)} 72% 46%)">${p.team}</div><div><div class="n">${sn(p.name)}</div><div class="mu">${p.gp} games</div></div></div>`},
+{l:'Player',g:p=>p.name,r:(p,i)=>`<div class="who"><span class="no">${i+1}</span>${logo(p.team)}<div><div class="n">${sn(p.name)}</div><div class="mu">${p.gp} games</div></div></div>`},
 {l:'Line',c:'gt',r:p=>`<input class="ln" inputmode="decimal" placeholder="–" value="${L[p.id]??''}" oninput="ln(${p.id},this.value)">`},
 {l:'Over',c:'gt',r:p=>`<span id="s${p.id}"></span>`},
 {l:'Over L5',c:'gt',r:p=>`<span id="t${p.id}"></span>`},
