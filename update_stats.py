@@ -341,12 +341,14 @@ def _ud_get(kind, u, hd):
 
 def fetch_underdog():
     import uuid
-    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d%H%M%S")
+    now = dt.datetime.now(dt.timezone.utc)
+    f = lambda d: (now - dt.timedelta(days=d)).strftime("%Y%m%d%H%M%S")
+    versions = [f(0), f(1), f(3), f(7), f(14), f(30), f(60), f(120), f(240), "20240426183843"]
     errs = []
     for u in UD_URLS:
         v = u.split("/")[-2]
-        last = None
-        for kind, cv in (("h1", stamp), ("h1", "20991231235959"), ("h2", stamp)):
+        codes, body = [], ""
+        for kind, cv in [("h1", x) for x in versions] + [("h2", f(1))]:
             hd = {"accept": "application/json", "accept-language": "en-US,en;q=0.9",
                   "origin": "https://underdogfantasy.com", "referer": "https://underdogfantasy.com/",
                   "client-type": "web", "client-version": cv, "client-device-id": str(uuid.uuid4()),
@@ -354,30 +356,67 @@ def fetch_underdog():
                   "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
             try:
                 r = _ud_get(kind, u, hd)
-                print("Underdog", v, kind, cv[:8], r.status_code, len(r.content), file=sys.stderr)
-                if r.status_code == 426:
-                    last = f"Underdog {v}: HTTP 426 {r.text[:50]!r}"
-                    continue
-                if not r.ok:
-                    errs.append(f"Underdog {v}: HTTP {r.status_code} {r.text[:50]!r}")
-                    break
-                try:
-                    j = r.json()
-                except Exception:
-                    errs.append(f"Underdog {v}: not JSON ({r.text[:40]!r})")
-                    break
-                seen = set()
-                res = parse_ud(j, seen)
-                if res:
-                    return res
-                errs.append(f"Underdog {v}: no PRA lines (keys seen: {', '.join(sorted(seen)[:8]) or 'none'}; top-level: {', '.join(list(j)[:6])})")
-                break
             except Exception as e:
-                errs.append(f"Underdog {v} ({kind}): {str(e)[:60]}" + (f" after {last}" if last else ""))
-                break
+                codes.append(f"{kind}:err")
+                body = body or str(e)[:80]
+                continue
+            print("Underdog", v, kind, cv[:8], r.status_code, len(r.content), file=sys.stderr)
+            codes.append(str(r.status_code))
+            if r.status_code != 200:
+                body = body or r.text[:220]
+                continue
+            try:
+                j = r.json()
+            except Exception:
+                body = body or "200 but not JSON"
+                continue
+            seen = set()
+            res = parse_ud(j, seen)
+            if res:
+                print("Underdog worked with", kind, cv, file=sys.stderr)
+                return res
+            errs.append(f"Underdog {v}: 200 but no PRA lines (keys seen: {', '.join(sorted(seen)[:8]) or 'none'}; top-level: {', '.join(list(j)[:6])})")
+            break
         else:
-            errs.append(last + " (tried 2 versions + HTTP/2)")
+            errs.append(f"Underdog {v}: {len(codes)} tries, codes {','.join(sorted(set(codes)))}, reply {body!r}")
     raise RuntimeError("; ".join(errs))
+
+
+def parse_pp(j):
+    inc = {x.get("id"): x for x in j.get("included", [])}
+    out = {}
+    for d in j.get("data", []):
+        a = d.get("attributes") or {}
+        key = re.sub(r"[^a-z]", "", str(a.get("stat_type") or a.get("stat_display_name") or "").lower())
+        if key not in ("ptsrebsasts", "pointsreboundsassists"):
+            continue
+        if a.get("odds_type") not in (None, "standard"):
+            continue
+        pid = (((d.get("relationships") or {}).get("new_player") or {}).get("data") or {}).get("id")
+        pa = (inc.get(pid) or {}).get("attributes") or {}
+        name = pa.get("name") or pa.get("display_name")
+        try:
+            line = float(a.get("line_score"))
+        except (TypeError, ValueError):
+            continue
+        if name:
+            out.setdefault(norm_name(name), line)
+    return out
+
+
+def fetch_prizepicks():
+    import requests
+    hd = {"accept": "application/json", "origin": "https://app.prizepicks.com", "referer": "https://app.prizepicks.com/",
+          "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
+    r = requests.get("https://api.prizepicks.com/projections", timeout=30, headers=hd,
+                     params={"league_id": 7, "per_page": 1000, "single_stat": "true", "game_mode": "pickem"})
+    print("PrizePicks", r.status_code, len(r.content), file=sys.stderr)
+    if r.status_code != 200:
+        raise RuntimeError(f"PrizePicks: HTTP {r.status_code} {r.text[:60]!r}")
+    res = parse_pp(r.json())
+    if not res:
+        raise RuntimeError("PrizePicks: 200 but no PRA lines")
+    return res
 
 
 def fetch_odds_api(key, now):
@@ -413,7 +452,7 @@ def fetch_odds_api(key, now):
 
 
 def get_lines(now):
-    status = ["script v3"]
+    status = ["script v4"]
     key = os.environ.get("ODDS_API_KEY", "").strip()
     if key:
         try:
@@ -422,10 +461,11 @@ def get_lines(now):
             status.append(str(e)[:120])
     else:
         status.append("no ODDS_API_KEY secret set")
-    try:
-        return fetch_underdog(), "Underdog Fantasy", status
-    except Exception as e:
-        status.append(str(e)[:260])
+    for fn, name in ((fetch_underdog, "Underdog Fantasy"), (fetch_prizepicks, "PrizePicks")):
+        try:
+            return fn(), name, status
+        except Exception as e:
+            status.append(str(e)[:500])
     return {}, None, status
 
 
