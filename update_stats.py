@@ -1,4 +1,4 @@
-import json, math, os, sys, time, datetime as dt, statistics as st
+import json, math, os, re, sys, time, unicodedata, datetime as dt, statistics as st
 from collections import defaultdict
 
 SCHED = "https://cdn.nba.com/static/json/staticData/scheduleLeagueV2.json"
@@ -284,6 +284,54 @@ def fetch_next(now):
     return {"leagueSchedule": {"gameDates": [{"games": games}]}}
 
 
+UD_URLS = ["https://api.underdogfantasy.com/beta/v5/over_under_lines",
+           "https://api.underdogfantasy.com/beta/v6/over_under_lines"]
+
+
+def norm_name(n):
+    n = unicodedata.normalize("NFKD", str(n or "")).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z ]", "", n.replace("-", " ")).strip()
+
+
+def parse_ud(j):
+    players = {p.get("id"): p for p in j.get("players", [])}
+    apps = {a.get("id"): a for a in j.get("appearances", [])}
+    out = {}
+    for l in j.get("over_under_lines", []):
+        st_ = ((l.get("over_under") or {}).get("appearance_stat")) or {}
+        key = re.sub(r"[^a-z]", "", str(st_.get("stat") or st_.get("display_stat") or "").lower())
+        if key not in ("ptsrebsasts", "pointsreboundsassists"):
+            continue
+        try:
+            line = float(l.get("stat_value"))
+        except (TypeError, ValueError):
+            continue
+        ap = apps.get(st_.get("appearance_id")) or {}
+        pl = players.get(ap.get("player_id"))
+        if pl:
+            out.setdefault(norm_name(f'{pl.get("first_name", "")} {pl.get("last_name", "")}'), line)
+    return out
+
+
+def fetch_lines():
+    import requests
+    hd = {"accept": "application/json", "origin": "https://underdogfantasy.com", "referer": "https://underdogfantasy.com/",
+          "client-type": "web", "user-agent": "Mozilla/5.0"}
+    last = None
+    for u in UD_URLS:
+        try:
+            r = requests.get(u, timeout=30, headers=hd)
+            print("Underdog", u[-30:], r.status_code, len(r.content), file=sys.stderr)
+            r.raise_for_status()
+            res = parse_ud(r.json())
+            if res:
+                return res
+            last = "no PRA lines in response"
+        except Exception as e:
+            last = e
+    raise RuntimeError(last)
+
+
 def build(rows, sched, season, now):
     R = []
     for r in rows:
@@ -374,6 +422,18 @@ def main():
     if not rows:
         sys.exit("ERROR: no game data yet for " + season + "; data.json left unchanged")
     out = build(rows, sched, season, now)
+    try:
+        lines = fetch_lines()
+        n = 0
+        for p in out["players"]:
+            v = lines.get(norm_name(p["name"]))
+            if v is not None:
+                p["line"] = v
+                n += 1
+        out["lines_source"], out["lines_count"] = "Underdog Fantasy", n
+        print(f"lines matched: {n} of {len(lines)} PRA lines")
+    except Exception as e:
+        print("WARNING: lines unavailable:", e, file=sys.stderr)
     with open("data.json.tmp", "w") as f:
         json.dump(out, f, separators=(",", ":"))
     os.replace("data.json.tmp", "data.json")
