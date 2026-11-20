@@ -284,139 +284,9 @@ def fetch_next(now):
     return {"leagueSchedule": {"gameDates": [{"games": games}]}}
 
 
-UD_URLS = ["https://api.underdogfantasy.com/beta/v5/over_under_lines",
-           "https://api.underdogfantasy.com/beta/v6/over_under_lines"]
-
-
 def norm_name(n):
     n = unicodedata.normalize("NFKD", str(n or "")).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z ]", "", n.replace("-", " ")).strip()
-
-
-def parse_ud(j, seen=None):
-    players = {p.get("id"): p for p in j.get("players", [])}
-    apps = {a.get("id"): a for a in j.get("appearances", [])}
-    out = {}
-    for l in j.get("over_under_lines", []):
-        st_ = ((l.get("over_under") or {}).get("appearance_stat")) or {}
-        key = re.sub(r"[^a-z]", "", str(st_.get("stat") or st_.get("display_stat") or "").lower())
-        if seen is not None and key:
-            seen.add(key)
-        if key not in ("ptsrebsasts", "pointsreboundsassists"):
-            continue
-        try:
-            line = float(l.get("stat_value"))
-        except (TypeError, ValueError):
-            continue
-        ap = apps.get(st_.get("appearance_id")) or {}
-        pl = players.get(ap.get("player_id"))
-        if pl:
-            out.setdefault(norm_name(f'{pl.get("first_name", "")} {pl.get("last_name", "")}'), line)
-    return out
-
-
-class _Resp:
-    def __init__(self, code, text, content, jf):
-        self.status_code, self.ok, self.text, self.content, self._jf = code, code < 400, text, content, jf
-
-    def json(self):
-        return self._jf()
-
-
-def _ud_get(kind, u, hd):
-    if kind == "h1":
-        import requests
-        return requests.get(u, timeout=30, headers=hd)
-    try:
-        import httpx
-        import h2  # noqa: F401
-    except ImportError:
-        import subprocess
-        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "httpx[http2]"], check=True, timeout=120)
-        import httpx
-    with httpx.Client(http2=True, timeout=30) as c:
-        r = c.get(u, headers=hd)
-    return _Resp(r.status_code, r.text, r.content, r.json)
-
-
-def fetch_underdog():
-    import uuid
-    now = dt.datetime.now(dt.timezone.utc)
-    f = lambda d: (now - dt.timedelta(days=d)).strftime("%Y%m%d%H%M%S")
-    versions = [f(0), f(1), f(3), f(7), f(14), f(30), f(60), f(120), f(240), "20240426183843"]
-    errs = []
-    for u in UD_URLS:
-        v = u.split("/")[-2]
-        codes, body = [], ""
-        for kind, cv in [("h1", x) for x in versions] + [("h2", f(1))]:
-            hd = {"accept": "application/json", "accept-language": "en-US,en;q=0.9",
-                  "origin": "https://underdogfantasy.com", "referer": "https://underdogfantasy.com/",
-                  "client-type": "web", "client-version": cv, "client-device-id": str(uuid.uuid4()),
-                  "client-request-id": str(uuid.uuid4()),
-                  "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
-            try:
-                r = _ud_get(kind, u, hd)
-            except Exception as e:
-                codes.append(f"{kind}:err")
-                body = body or str(e)[:80]
-                continue
-            print("Underdog", v, kind, cv[:8], r.status_code, len(r.content), file=sys.stderr)
-            codes.append(str(r.status_code))
-            if r.status_code != 200:
-                body = body or r.text[:220]
-                continue
-            try:
-                j = r.json()
-            except Exception:
-                body = body or "200 but not JSON"
-                continue
-            seen = set()
-            res = parse_ud(j, seen)
-            if res:
-                print("Underdog worked with", kind, cv, file=sys.stderr)
-                return res
-            errs.append(f"Underdog {v}: 200 but no PRA lines (keys seen: {', '.join(sorted(seen)[:8]) or 'none'}; top-level: {', '.join(list(j)[:6])})")
-            break
-        else:
-            errs.append(f"Underdog {v}: {len(codes)} tries, codes {','.join(sorted(set(codes)))}, reply {body!r}")
-    raise RuntimeError("; ".join(errs))
-
-
-def parse_pp(j):
-    inc = {x.get("id"): x for x in j.get("included", [])}
-    out = {}
-    for d in j.get("data", []):
-        a = d.get("attributes") or {}
-        key = re.sub(r"[^a-z]", "", str(a.get("stat_type") or a.get("stat_display_name") or "").lower())
-        if key not in ("ptsrebsasts", "pointsreboundsassists"):
-            continue
-        if a.get("odds_type") not in (None, "standard"):
-            continue
-        pid = (((d.get("relationships") or {}).get("new_player") or {}).get("data") or {}).get("id")
-        pa = (inc.get(pid) or {}).get("attributes") or {}
-        name = pa.get("name") or pa.get("display_name")
-        try:
-            line = float(a.get("line_score"))
-        except (TypeError, ValueError):
-            continue
-        if name:
-            out.setdefault(norm_name(name), line)
-    return out
-
-
-def fetch_prizepicks():
-    import requests
-    hd = {"accept": "application/json", "origin": "https://app.prizepicks.com", "referer": "https://app.prizepicks.com/",
-          "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
-    r = requests.get("https://api.prizepicks.com/projections", timeout=30, headers=hd,
-                     params={"league_id": 7, "per_page": 1000, "single_stat": "true", "game_mode": "pickem"})
-    print("PrizePicks", r.status_code, len(r.content), file=sys.stderr)
-    if r.status_code != 200:
-        raise RuntimeError(f"PrizePicks: HTTP {r.status_code} {r.text[:60]!r}")
-    res = parse_pp(r.json())
-    if not res:
-        raise RuntimeError("PrizePicks: 200 but no PRA lines")
-    return res
 
 
 def fetch_odds_api(key, now):
@@ -452,21 +322,13 @@ def fetch_odds_api(key, now):
 
 
 def get_lines(now):
-    status = ["script v4"]
     key = os.environ.get("ODDS_API_KEY", "").strip()
-    if key:
-        try:
-            return fetch_odds_api(key, now), "DraftKings/FanDuel (The Odds API)", status
-        except Exception as e:
-            status.append(str(e)[:120])
-    else:
-        status.append("no ODDS_API_KEY secret set")
-    for fn, name in ((fetch_underdog, "Underdog Fantasy"), (fetch_prizepicks, "PrizePicks")):
-        try:
-            return fn(), name, status
-        except Exception as e:
-            status.append(str(e)[:500])
-    return {}, None, status
+    if not key:
+        return {}, None, []
+    try:
+        return fetch_odds_api(key, now), "DraftKings/FanDuel (The Odds API)", []
+    except Exception as e:
+        return {}, None, [str(e)[:300]]
 
 
 def build(rows, sched, season, now):
@@ -574,8 +436,8 @@ def main():
         print(f"lines matched: {n} of {len(lines)} ({src})")
         if n == 0:
             status.append("lines found but no player names matched, e.g. " + ", ".join(list(lines)[:3]))
-    if not out.get("lines_count"):
-        out["lines_status"] = "; ".join(status) or "no source returned lines"
+    if status and not out.get("lines_count"):
+        out["lines_status"] = "; ".join(status)
         print("WARNING: no lines:", out["lines_status"], file=sys.stderr)
     with open("data.json.tmp", "w") as f:
         json.dump(out, f, separators=(",", ":"))
