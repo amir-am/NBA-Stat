@@ -383,6 +383,8 @@ def get_lines(now):
             return fetch_odds_api(key, now), "DraftKings/FanDuel (The Odds API)", status
         except Exception as e:
             status.append(str(e)[:120])
+    else:
+        status.append("no ODDS_API_KEY secret set")
     try:
         return fetch_underdog(), "Underdog Fantasy", status
     except Exception as e:
