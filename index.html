@@ -56,10 +56,12 @@ tr:last-child td{border-bottom:0}
 .ls{display:inline-block;min-width:66px;text-align:center;padding:3px 10px;border-radius:99px;font-weight:700;background:var(--sub);color:var(--mu)}.ls.up{background:var(--upb);color:var(--up)}.ls.dn{background:var(--dnb);color:var(--dn)}
 .lg{flex:none;width:30px;height:30px;object-fit:contain}@media(prefers-color-scheme:dark){.lg{background:#fff;border-radius:50%;padding:3px}}
 .ln.auto{border-style:dashed}
+.lbn{margin:4px 12px 8px;padding:10px 12px;border-radius:14px;background:var(--dnb);font-size:13px;line-height:1.4}
 </style></head><body>
 <div class="hero"><div class="hg"><h1>PRA Props</h1><button class="hb" onclick="help()">? Help</button><div class="sea" id="se">Loading…</div><div class="upd" id="ch"></div></div><input id="q" placeholder="Search a player"></div>
 <div class="bar">
 <select id="tm"><option value="">Teams</option></select><button class="chip" id="td" onclick="today()">Today</button><label>Top <input id="tp" type="number" value="50"></label><label>Min GP <input id="mg" type="number" value="10"></label></div>
+<div id="lb" class="lbn" style="display:none"></div>
 <div class="panel"><div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div><div id="em" class="mu" style="padding:14px 16px"></div></div>
 <div class="note" id="nt">These are past results, not predictions, and small samples early in the season are unreliable. Floor 90 is the PRA a player reached in at least 90% of games. Allowed is the PRA the next opponent gives up per game (#1 gives up the most). Tap a name for full details.</div>
 <div id="o" onclick="if(event.target==this)this.style.display='none'"><div class="sh" id="sh"></div></div>
@@ -168,6 +170,7 @@ $('o').style.display='flex'}
 fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('se').textContent='NBA regular season '+d.season;
 $('ch').innerHTML=`<span>Updated ${et(d.updated)}</span>`;
 $('nt').textContent+=d.lines_source?' Lines are filled in automatically from '+d.lines_source+' ('+d.lines_count+' players) and may differ from other sportsbooks. A dashed box is an automatic line. Type over it to change it; your typed lines are saved.':(d.lines_status?' Automatic lines are unavailable right now ('+d.lines_status+'). You can type lines yourself.':'');
+if(!d.lines_source){const b=$('lb');b.style.display='block';b.textContent=d.lines_status?'Automatic lines are not available: '+d.lines_status:'This data file has no line information, so update_stats.py in your repo is probably an old version. Upload the newest update_stats.py and run the workflow.'}
 TODAY=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
 const pt={};d.players.forEach(p=>{if(plays(p))pt[p.team]=1});
 const sel=$('tm');[...new Set(d.players.map(p=>p.team))].sort().forEach(t=>sel.add(new Option(t+(pt[t]?' 🏀':''),t)));
