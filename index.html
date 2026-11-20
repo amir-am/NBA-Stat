@@ -70,24 +70,25 @@ const pc=(a,l)=>{const c=a.filter(v=>v>l).length,n=a.length,p=Math.round(100*c/n
 const pd=s=>{if(!s)return null;const d=new Date(/T\d\d:\d\d(Z|[+-]\d\d:?\d\d)?$/.test(s)&&!/:\d\d:\d\d/.test(s)?s.replace(/Z$/,'')+':00'+(/Z$/.test(s)?'Z':''):s);return isNaN(d)?null:d};
 const gday=n=>{const d=pd(n.utc);return d?d.toLocaleDateString('en-CA',{timeZone:'America/New_York'}):n.date};
 const gtime=n=>{const d=pd(n.utc);return d?d.toLocaleTimeString('en-US',{timeZone:'America/New_York',hour:'numeric',minute:'2-digit'}):''};
+const glab=n=>{const d=pd(n.utc)||pd(n.date+'T12:00Z');if(!d)return'–';return(gday(n)==TODAY?'Today':d.toLocaleDateString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric'}))+(n.utc&&gtime(n)?' '+gtime(n):'')};
 const plays=p=>p.next&&gday(p.next)==TODAY;
 const O=p=>p.next&&T[p.next.opp];
 const tr=p=>p.l5>=p.avg*1.15?'up':p.l5<=p.avg*.85?'dn':'';
 const spark=p=>{const v=p.pra.slice(-5),m=Math.max(...v,p.avg)*1.08;return`<svg width="70" height="26" viewBox="0 0 70 26">`+v.map((x,i)=>`<rect x="${i*14}" y="${26-x/m*26}" width="11" height="${x/m*26}" rx="3" fill="var(${x>=p.avg?'--up':'--dn'})"/>`).join('')+`<line x1="0" x2="70" y1="${26-p.avg/m*26}" y2="${26-p.avg/m*26}" stroke="var(--fg)" stroke-width=".8" stroke-dasharray="2 2" opacity=".55"/></svg>`};
 const C=[
-{l:'Player',g:p=>p.name,r:(p,i)=>`<div class="who"><span class="no">${i+1}</span><div class="av" style="background:hsl(${hue(p.team)} 72% 46%)">${p.team}</div><div><div class="n">${p.name}</div><div class="mu">${p.gp} GP${plays(p)&&gtime(p.next)?` <b class="tm">${gtime(p.next)} ET</b>`:''}</div></div></div>`},
+{l:'Player',g:p=>p.name,r:(p,i)=>`<div class="who"><span class="no">${i+1}</span><div class="av" style="background:hsl(${hue(p.team)} 72% 46%)">${p.team}</div><div><div class="n">${p.name}</div><div class="mu">${p.gp} games</div></div></div>`},
 {l:'Line',c:'gt',r:p=>`<input class="ln" inputmode="decimal" placeholder="–" value="${L[p.id]??''}" oninput="ln(${p.id},this.value)">`},
 {l:'Over',c:'gt',r:p=>`<span id="s${p.id}"></span>`},
 {l:'Over L5',c:'gt',r:p=>`<span id="t${p.id}"></span>`},
 {l:'Avg',c:'ga',g:p=>p.avg,r:p=>`<span class="av2">${f(p.avg)}</span>`},
-{l:'Median',c:'ga',g:p=>p.med,r:p=>f(p.med)},
 {l:'L5',c:'gf',g:p=>p.l5,r:p=>`<span class="pl ${tr(p)}">${f(p.l5)}</span>`},
 {l:'Last 5',c:'gf',r:spark},
 {l:'Floor 90',c:'gl',g:p=>p.f90,r:p=>p.f90},{l:'Floor 80',c:'gl',g:p=>p.f80,r:p=>p.f80},{l:'Floor 70',c:'gl',g:p=>p.f70,r:p=>p.f70},
 {l:'Minutes',c:'gm',g:p=>p.min,r:p=>f(p.min)},
 {l:'Next',c:'gm',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> <b>${p.next.opp}</b>`:'–'},
+{l:'Game (ET)',c:'gm',g:p=>p.next&&(p.next.utc||p.next.date),r:p=>p.next?glab(p.next):'–'},
 {l:'Opp allowed',c:'gm',g:p=>O(p)&&O(p).allowed,r:p=>O(p)?`${f(O(p).allowed)} <span class="rk ${O(p).rank<=10?'up':O(p).rank>=21?'dn':''}">#${O(p).rank}</span>`:'–'}];
-function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==12)?1:-1};draw()}
+function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==11||i==12)?1:-1};draw()}
 function res(p){const l=parseFloat(L[p.id]),a=$('s'+p.id),b=$('t'+p.id);if(!a)return;
 if(isNaN(l)){a.innerHTML=b.innerHTML='<span class="mu">–</span>'}else{a.innerHTML=pc(p.pra,l);b.innerHTML=pc(p.pra.slice(-5),l)}}
 function ln(id,v){L[id]=v;try{localStorage.setItem('lines',JSON.stringify(L))}catch(e){}res(D.players.find(p=>p.id==id))}
@@ -113,10 +114,10 @@ $('o').style.display='flex'}
 function help(){
 const I=[['--t','Line, Over, Over L5','Type the sportsbook line (for example 38.5). <i>Over</i> shows how often the player went over it this season, and <i>Over L5</i> how often in the last 5 games. 60% 3/5 means he cleared that line in 3 of his last 5 games. Green is 60% or more, red is 40% or less.'],
 ['--l','Floor 90, 80, 70','The PRA a player reached or beat in at least 90%, 80% or 70% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
-['--a','Avg and Median','Avg is the mean PRA. Median is the middle game. If Avg is well above Median, a few huge games are pulling it up, so the Median is the more typical night.'],
+['--a','Avg','Avg is his mean PRA over the games he played this season.'],
 ['--f','L5 and Last 5 bars','L5 is his average over the last 5 games. It is a green badge when he is running 15% or more above his season average (hot) and red when 15% or more below (cold). The small bars show each of the last 5 games: green at or above his average, red below, dashed line is the average.'],
 ['--m','Minutes','More minutes usually means more PRA. Tap a name to see his last 5 minutes. If they dropped, the recent numbers may overstate what he will do.'],
-['--m','Next and Opp allowed','Next is his next game (vs is home, @ is away). Opp allowed is how many PRA that team gives up per game to all opposing players, with its rank. #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
+['--m','Next and Opp allowed','Next is his next game (vs is home, @ is away), and Game shows its date and tip-off time in Eastern time. Opp allowed is how many PRA that team gives up per game to all opposing players, with its rank. #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
 ['--a','Details (tap a name)','Std dev tells how swingy he is: higher means less predictable. Also home and away averages, back-to-back and rested averages (n/a if fewer than 5 games), and his last 15 games with your line on the chart.']];
 $('sh').innerHTML=`<div class="hd"><div><b>How to read this</b><div style="opacity:.9">Past stats, step by step</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">`+
 I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</span></div>`).join('')+
