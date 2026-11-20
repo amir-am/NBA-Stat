@@ -1,8 +1,7 @@
 name: Update NBA stats
 on:
   schedule:
-    - cron: "0 10 * * *"
-    - cron: "0 21 * * *"
+    - cron: "17 10 * * *"
   workflow_dispatch:
 permissions:
   contents: write
@@ -17,6 +16,8 @@ jobs:
           python-version: "3.12"
       - run: pip install nba_api requests
       - run: python update_stats.py
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
       - name: Commit if changed
         run: |
           git config user.name "stats-bot"
