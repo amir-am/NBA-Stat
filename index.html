@@ -54,12 +54,13 @@ tr:last-child td{border-bottom:0}
 .tm{color:var(--a);font-weight:700}
 .hero{position:relative}.hb{position:absolute;top:calc(env(safe-area-inset-top) + 22px);right:16px;margin:0;white-space:nowrap}
 .ls{display:inline-block;min-width:66px;text-align:center;padding:3px 10px;border-radius:99px;font-weight:700;background:var(--sub);color:var(--mu)}.ls.up{background:var(--upb);color:var(--up)}.ls.dn{background:var(--dnb);color:var(--dn)}
+.chips{position:absolute;top:calc(env(safe-area-inset-top) + 62px);right:16px;margin:0}.chips span{font-size:11px;white-space:nowrap}.sea{max-width:50%}
 </style></head><body>
 <div class="hero"><h1>PRA Props</h1><div class="sea" id="se">Loading…</div><div class="chips" id="ch"></div><button class="hb" onclick="help()">How to read this</button><input id="q" placeholder="Search a player"></div>
 <div class="bar">
 <select id="tm"><option value="">All teams</option></select><label>Top <input id="tp" type="number" value="50"></label><label>Min games <input id="mg" type="number" value="10"></label></div>
 <div class="panel"><div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div><div id="em" class="mu" style="padding:14px 16px"></div></div>
-<div class="note">These are past results, not predictions, and small samples early in the season are unreliable. Floor 90 is the PRA a player reached in at least 90% of games. L5 turns green or red when it is 15% above or below the season average. Opp allowed is the PRA the next opponent gives up per game (#1 gives up the most). Tap a name for full details.</div>
+<div class="note">These are past results, not predictions, and small samples early in the season are unreliable. Floor 90 is the PRA a player reached in at least 90% of games. Opp allowed is the PRA the next opponent gives up per game (#1 gives up the most). Tap a name for full details.</div>
 <div id="o" onclick="if(event.target==this)this.style.display='none'"><div class="sh" id="sh"></div></div>
 <script>
 const $=i=>document.getElementById(i);
@@ -84,14 +85,14 @@ const C=[
 {l:'Over L5',c:'gt',r:p=>`<span id="t${p.id}"></span>`},
 {l:'Lean',c:'gt',r:p=>`<span id="l${p.id}"></span>`},
 {l:'Avg',c:'ga',g:p=>p.avg,r:p=>`<span class="av2">${f(p.avg)}</span>`},
-{l:'L5',c:'gf',g:p=>p.l5,r:p=>`<span class="pl ${tr(p)}">${f(p.l5)}</span>`},
+{l:'L5',c:'gf',g:p=>p.l5,r:p=>f(p.l5)},
 {l:'Last 5',c:'gf',r:spark},
-{l:'Floor 90',c:'gl',g:p=>p.f90,r:p=>p.f90},{l:'Floor 80',c:'gl',g:p=>p.f80,r:p=>p.f80},{l:'Floor 70',c:'gl',g:p=>p.f70,r:p=>p.f70},
+{l:'Floor 90',c:'gl',g:p=>p.f90,r:p=>p.f90},{l:'Floor 80',c:'gl',g:p=>p.f80,r:p=>p.f80},
 {l:'Minutes',c:'gm',g:p=>p.min,r:p=>f(p.min)},
-{l:'Next',c:'gm',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> <b>${p.next.opp}</b>`:'–'},
-{l:'Game (ET)',c:'gm',g:p=>p.next&&(p.next.utc||p.next.date),r:p=>p.next?glab(p.next):'–'},
+{l:'Next opponent',c:'gm',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> <b>${p.next.opp}</b>`:'–'},
+{l:'Next game (ET)',c:'gm',g:p=>p.next&&(p.next.utc||p.next.date),r:p=>p.next?glab(p.next):'–'},
 {l:'Opp allowed',c:'gm',g:p=>O(p)&&O(p).allowed,r:p=>O(p)?`${f(O(p).allowed)} <span class="rk ${O(p).rank<=10?'up':O(p).rank>=21?'dn':''}">#${O(p).rank}</span>`:'–'}];
-function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==12||i==13)?1:-1};draw()}
+function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==11||i==12)?1:-1};draw()}
 const dd=(a,b)=>Math.round((Date.parse(b+'T12:00Z')-Date.parse(a+'T12:00Z'))/864e5);
 function lean(p,l){
 if(isNaN(l))return null;
@@ -130,7 +131,7 @@ const bars=G.map((x,i)=>`<rect x="${i*bw+3}" y="${H-x.pra/mx*H}" width="${bw-6}"
 const ly=has?`<line x1="0" x2="${W}" y1="${H-l/mx*H}" y2="${H-l/mx*H}" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/>`:'';
 const ls=has?lean(p,l):null;const tl=(a,b,c)=>`<div class="tl" style="--c:var(${c})"><div>${a}</div><div>${b}</div></div>`,sb=s=>s?f(s.avg)+' ('+s.n+')':'n/a';
 $('sh').innerHTML=`<div class="hd"><div><b>${p.name}</b><div style="opacity:.9">${p.team}, ${p.gp} games</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">
-<div class="g">${tl('Std dev',f(p.sd),'--a')}${tl('Low to high',p.mn+' to '+p.mx,'--a')}${tl('L5 minutes',f(p.l5min),'--m')}${tl('Home avg',f(p.home),'--t')}${tl('Away avg',f(p.away),'--t')}${tl('Back-to-back',sb(p.b2b),'--f')}${tl('2+ days rest',sb(p.r2),'--f')}${tl('Floor 90 / 80',p.f90+' / '+p.f80,'--l')}${tl('Floor 70',p.f70,'--l')}</div>
+<div class="g">${tl('Std dev',f(p.sd),'--a')}${tl('Low to high',p.mn+' to '+p.mx,'--a')}${tl('L5 minutes',f(p.l5min),'--m')}${tl('Home avg',f(p.home),'--t')}${tl('Away avg',f(p.away),'--t')}${tl('Back-to-back',sb(p.b2b),'--f')}${tl('2+ days rest',sb(p.r2),'--f')}${tl('Floor 90',p.f90,'--l')}${tl('Floor 80',p.f80,'--l')}</div>
 ${lb(ls,l)}
 <svg viewBox="0 0 ${W} ${H}" width="100%">${bars}${ly}</svg><div class="mu" style="margin:4px 0 12px">Last ${G.length} games, oldest to newest${has?'. Dashed line is your line, '+l:''}</div>
 <table><tr><th>Date</th><th>Opp</th><th>Min</th><th>PTS</th><th>REB</th><th>AST</th><th>PRA</th></tr>`+
@@ -139,11 +140,11 @@ $('o').style.display='flex'}
 function help(){
 const I=[['--t','Line, Over, Over L5','Type the sportsbook line (for example 38.5). <i>Over</i> shows how often the player went over it this season, and <i>Over L5</i> how often in the last 5 games. 60% 3/5 means he cleared that line in 3 of his last 5 games. Green is 60% or more, red is 40% or less.'],
 ['--t','Lean (my suggestion)','Shows Over, Under or Neither once you type a line. It adds points for: season and last 5 over %, how far his season and L5 averages sit from the line (compared with how much he normally swings), his minutes trend, the opponent rank, a back-to-back, and home or away. +4 or more is Over, -4 or less is Under, anything between is Neither. Tap a name to see every point. It is a simple scoring rule, not a prediction. It does not know about injuries or lineup changes, and early-season samples are small.'],
-['--l','Floor 90, 80, 70','The PRA a player reached or beat in at least 90%, 80% or 70% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
+['--l','Floor 90 and 80','The PRA a player reached or beat in at least 90% or 80% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
 ['--a','Avg','Avg is his mean PRA over the games he played this season.'],
-['--f','L5 and Last 5 bars','L5 is his average over the last 5 games. It is a green badge when he is running 15% or more above his season average (hot) and red when 15% or more below (cold). The small bars show each of the last 5 games: green at or above his average, red below, dashed line is the average.'],
+['--f','L5 and Last 5 bars','L5 is his average over the last 5 games. The small bars show each of the last 5 games: green at or above his average, red below, dashed line is the average.'],
 ['--m','Minutes','More minutes usually means more PRA. Tap a name to see his last 5 minutes. If they dropped, the recent numbers may overstate what he will do.'],
-['--m','Next and Opp allowed','Next is his next game (vs is home, @ is away), and Game shows its date and tip-off time in Eastern time. Opp allowed is how many PRA that team gives up per game to all opposing players, with its rank. #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
+['--m','Next and Opp allowed','Next opponent shows who he plays next (vs is home, @ is away), and Next game shows its date and tip-off time in Eastern time. Opp allowed is how many PRA that team gives up per game to all opposing players, with its rank. #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
 ['--a','Details (tap a name)','Std dev tells how swingy he is: higher means less predictable. Also home and away averages, back-to-back and rested averages (n/a if fewer than 5 games), and his last 15 games with your line on the chart.']];
 $('sh').innerHTML=`<div class="hd"><div><b>How to read this</b><div style="opacity:.9">Past stats, step by step</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">`+
 I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</span></div>`).join('')+
@@ -154,7 +155,7 @@ fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('se').
 $('ch').innerHTML=`<span>Updated ${et(d.updated)}</span>`;
 TODAY=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
 const pt={};d.players.forEach(p=>{if(plays(p))pt[p.team]=1});
-const sel=$('tm');[...new Set(d.players.map(p=>p.team))].sort().forEach(t=>sel.add(new Option((pt[t]?'🏀 ':'')+t,t)));
+const sel=$('tm');[...new Set(d.players.map(p=>p.team))].sort().forEach(t=>sel.add(new Option(t+(pt[t]?' 🏀':''),t)));
 sel.addEventListener('change',()=>{TM=sel.value;draw()});
 ['tp','mg','q'].forEach(i=>$(i).addEventListener('input',draw));draw()}).catch(e=>{$('se').textContent='No data yet ('+e+')'});
 </script></body></html>
