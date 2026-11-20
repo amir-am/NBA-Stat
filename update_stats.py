@@ -316,30 +316,41 @@ def parse_ud(j, seen=None):
 
 
 def fetch_underdog():
-    import requests
-    hd = {"accept": "application/json", "origin": "https://underdogfantasy.com", "referer": "https://underdogfantasy.com/",
-          "client-type": "web", "user-agent": "Mozilla/5.0"}
+    import requests, uuid
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d%H%M%S")
     errs = []
     for u in UD_URLS:
         v = u.split("/")[-2]
-        try:
-            r = requests.get(u, timeout=30, headers=hd)
-            print("Underdog", v, r.status_code, len(r.content), file=sys.stderr)
-            if not r.ok:
-                errs.append(f"Underdog {v}: HTTP {r.status_code}")
-                continue
+        for cv in (stamp, "20991231235959"):
+            hd = {"accept": "application/json", "accept-language": "en-US,en;q=0.9",
+                  "origin": "https://underdogfantasy.com", "referer": "https://underdogfantasy.com/",
+                  "client-type": "web", "client-version": cv, "client-device-id": str(uuid.uuid4()),
+                  "client-request-id": str(uuid.uuid4()), "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
             try:
-                j = r.json()
-            except Exception:
-                errs.append(f"Underdog {v}: not JSON ({r.text[:40]!r})")
-                continue
-            seen = set()
-            res = parse_ud(j, seen)
-            if res:
-                return res
-            errs.append(f"Underdog {v}: no PRA lines (keys seen: {', '.join(sorted(seen)[:8]) or 'none'}; top-level: {', '.join(list(j)[:6])})")
-        except Exception as e:
-            errs.append(f"Underdog {v}: {str(e)[:60]}")
+                r = requests.get(u, timeout=30, headers=hd)
+                print("Underdog", v, cv[:8], r.status_code, len(r.content), file=sys.stderr)
+                if r.status_code == 426:
+                    last = f"Underdog {v}: HTTP 426 {r.text[:50]!r}"
+                    continue
+                if not r.ok:
+                    errs.append(f"Underdog {v}: HTTP {r.status_code} {r.text[:50]!r}")
+                    break
+                try:
+                    j = r.json()
+                except Exception:
+                    errs.append(f"Underdog {v}: not JSON ({r.text[:40]!r})")
+                    break
+                seen = set()
+                res = parse_ud(j, seen)
+                if res:
+                    return res
+                errs.append(f"Underdog {v}: no PRA lines (keys seen: {', '.join(sorted(seen)[:8]) or 'none'}; top-level: {', '.join(list(j)[:6])})")
+                break
+            except Exception as e:
+                errs.append(f"Underdog {v}: {str(e)[:60]}")
+                break
+        else:
+            errs.append(last)
     raise RuntimeError("; ".join(errs))
 
 
