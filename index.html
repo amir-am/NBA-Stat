@@ -4,14 +4,15 @@
 <title>PRA Props</title>
 <style>
 :root{color-scheme:light dark;--bg:#fff6f0;--card:#fff;--fg:#231433;--mu:#7d6b8d;--bd:#f1e4ee;--sub:#f9edf6;--up:#059669;--dn:#e11d48;--upb:#d9f7ea;--dnb:#ffe0e7;--sh:rgba(124,58,237,.14);
---t:#0891b2;--a:#f97316;--f:#c026d3;--l:#d97706;--m:#7c3aed}
+--t:#0891b2;--a:#f97316;--f:#c026d3;--l:#d97706;--m:#7c3aed;--n:#2563eb}
 @media(prefers-color-scheme:dark){:root{--bg:#140f1f;--card:#1e1731;--fg:#f6f0ff;--mu:#a597bd;--bd:#2f2548;--sub:#2a2142;--up:#34d399;--dn:#fb7185;--upb:#11382c;--dnb:#42202b;--sh:rgba(0,0,0,.4);
---t:#22d3ee;--a:#ff9f43;--f:#e879f9;--l:#fbbf24;--m:#a78bfa}}
+--t:#22d3ee;--a:#ff9f43;--f:#e879f9;--l:#fbbf24;--m:#a78bfa;--n:#60a5fa}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.35 ui-rounded,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;padding:0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .hero{background:linear-gradient(135deg,#3b1d8f,#c026d3 62%,#ff7a18);color:#fff;padding:calc(env(safe-area-inset-top) + 20px) 18px 20px;border-radius:0 0 30px 30px}
-h1{margin:0;font-size:34px;font-weight:800;letter-spacing:-1px}.sea{font-size:15px;opacity:.9;margin:2px 0 12px}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}.chips span{background:rgba(255,255,255,.2);padding:4px 10px;border-radius:99px;font-size:12px}
+h1{margin:0;font-size:34px;font-weight:800;letter-spacing:-1px}.sea{font-size:13px;opacity:.9;margin:0}
+.hg{display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto;column-gap:12px;row-gap:3px;align-items:center;margin-bottom:16px}
+.upd{justify-self:end;font-size:11px;white-space:nowrap;opacity:.92}.upd span::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;margin-right:6px;vertical-align:1px}
 #q{width:100%;font:inherit;color:#fff;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);border-radius:14px;padding:11px 14px}
 #q::placeholder{color:rgba(255,255,255,.8)}#q:focus{outline:2px solid #fff}
 .bar{display:flex;gap:8px;flex-wrap:wrap;padding:14px 16px 8px;align-items:center}
@@ -24,7 +25,7 @@ th{position:sticky;top:0;z-index:2;background:var(--card);font-size:12px;font-we
 th.sb{cursor:pointer}th.on{background:var(--sub)}
 td{background:var(--tint,transparent)}
 .gt{--gc:var(--t);--tint:color-mix(in srgb,var(--t) 9%,transparent)}.ga{--gc:var(--a);--tint:color-mix(in srgb,var(--a) 9%,transparent)}
-.gf{--gc:var(--f)}.gl{--gc:var(--l);--tint:color-mix(in srgb,var(--l) 11%,transparent)}.gm{--gc:var(--m)}
+.gf{--gc:var(--f)}.gl{--gc:var(--l);--tint:color-mix(in srgb,var(--l) 11%,transparent)}.gm{--gc:var(--m)}.gn{--gc:var(--n)}
 td:first-child,th:first-child{position:sticky;left:0;z-index:3;text-align:left;background:var(--card);box-shadow:1px 0 0 var(--bd)}th:first-child{z-index:4}
 tr:last-child td{border-bottom:0}
 .who{display:flex;align-items:center;gap:9px}.av{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:800}
@@ -44,7 +45,7 @@ tr:last-child td{border-bottom:0}
 .g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
 .tl{background:var(--card);border-radius:14px;padding:9px 11px;border-left:4px solid var(--c)}.tl div:first-child{color:var(--mu);font-size:12px}.tl div:last-child{font-weight:700;font-size:16px}
 .sh table{width:100%;background:var(--card);border-radius:14px}.sh th,.sh td{text-align:center;padding:8px 4px;background:none;position:static;border-bottom:1px solid var(--bd)}.sh th{color:var(--mu);border-bottom:1px solid var(--bd)}
-.hb{margin:-4px 0 14px;font:inherit;font-weight:700;font-size:13px;color:#3b1d8f;background:#fff;border:0;border-radius:99px;padding:7px 14px}
+.hb{justify-self:end;font:inherit;font-weight:700;font-size:13px;color:#3b1d8f;background:#fff;border:0;border-radius:99px;padding:7px 14px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .hp{background:var(--card);border-left:4px solid var(--c);border-radius:14px;padding:10px 12px;margin-bottom:8px}.hp b{display:block;margin-bottom:2px}.hp span{color:var(--mu);font-size:13.5px}
 .hp i{font-style:normal;font-weight:700}.hh{font-weight:800;font-size:17px;margin:14px 2px 8px}
 .chip{font:inherit;font-size:14px;font-weight:600;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:9px 13px}
@@ -52,17 +53,15 @@ tr:last-child td{border-bottom:0}
 .tg{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.tb{font:inherit;font-weight:700;color:var(--fg);background:var(--card);border:2px solid transparent;border-radius:14px;padding:8px 0;display:grid;place-items:center}
 .tb.on{border-color:var(--a)}.tb.all{grid-column:1/-1;padding:11px}
 .tm{color:var(--a);font-weight:700}
-.hero{position:relative}.hb{position:absolute;top:calc(env(safe-area-inset-top) + 22px);right:16px;margin:0;white-space:nowrap}
 .ls{display:inline-block;min-width:66px;text-align:center;padding:3px 10px;border-radius:99px;font-weight:700;background:var(--sub);color:var(--mu)}.ls.up{background:var(--upb);color:var(--up)}.ls.dn{background:var(--dnb);color:var(--dn)}
-.chips{position:absolute;top:calc(env(safe-area-inset-top) + 62px);right:16px;margin:0}.chips span{font-size:11px;white-space:nowrap}.sea{max-width:50%}
 .lg{flex:none;width:30px;height:30px;object-fit:contain}@media(prefers-color-scheme:dark){.lg{background:#fff;border-radius:50%;padding:3px}}
 .ln.auto{border-style:dashed}
 </style></head><body>
-<div class="hero"><h1>PRA Props</h1><div class="sea" id="se">Loading…</div><div class="chips" id="ch"></div><button class="hb" onclick="help()">Help</button><input id="q" placeholder="Search a player"></div>
+<div class="hero"><div class="hg"><h1>PRA Props</h1><button class="hb" onclick="help()">? Help</button><div class="sea" id="se">Loading…</div><div class="upd" id="ch"></div></div><input id="q" placeholder="Search a player"></div>
 <div class="bar">
-<select id="tm"><option value="">Teams</option></select><button class="chip" id="td" onclick="today()">Today</button><label>Top <input id="tp" type="number" value="50"></label><label>Min games <input id="mg" type="number" value="10"></label></div>
+<select id="tm"><option value="">Teams</option></select><button class="chip" id="td" onclick="today()">Today</button><label>Top <input id="tp" type="number" value="50"></label><label>Min GP <input id="mg" type="number" value="10"></label></div>
 <div class="panel"><div id="w"><table><thead id="th"></thead><tbody id="b"></tbody></table></div><div id="em" class="mu" style="padding:14px 16px"></div></div>
-<div class="note" id="nt">These are past results, not predictions, and small samples early in the season are unreliable. Floor 90 is the PRA a player reached in at least 90% of games. Opp allowed is the PRA the next opponent gives up per game (#1 gives up the most). Tap a name for full details.</div>
+<div class="note" id="nt">These are past results, not predictions, and small samples early in the season are unreliable. Floor 90 is the PRA a player reached in at least 90% of games. Allowed is the PRA the next opponent gives up per game (#1 gives up the most). Tap a name for full details.</div>
 <div id="o" onclick="if(event.target==this)this.style.display='none'"><div class="sh" id="sh"></div></div>
 <script>
 const $=i=>document.getElementById(i);
@@ -96,32 +95,38 @@ const C=[
 {l:'Last 5',c:'gf',r:spark},
 {l:'Floor 90',c:'gl',g:p=>p.f90,r:p=>p.f90},{l:'Floor 80',c:'gl',g:p=>p.f80,r:p=>p.f80},
 {l:'Minutes',c:'gm',g:p=>p.min,r:p=>f(p.min)},
-{l:'Next opponent',c:'gm',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> <b>${p.next.opp}</b>`:'–'},
-{l:'Next game (ET)',c:'gm',g:p=>p.next&&(p.next.utc||p.next.date),r:p=>p.next?glab(p.next):'–'},
-{l:'Opp allowed',c:'gm',g:p=>O(p)&&O(p).allowed,r:p=>O(p)?`${f(O(p).allowed)} <span class="rk ${O(p).rank<=10?'up':O(p).rank>=21?'dn':''}">#${O(p).rank}</span>`:'–'}];
+{l:'Next',c:'gn',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> <b>${p.next.opp}</b>`:'–'},
+{l:'Date',c:'gn',g:p=>p.next&&(p.next.utc||p.next.date),r:p=>p.next?glab(p.next):'–'},
+{l:'Allowed',c:'gn',g:p=>O(p)&&O(p).allowed,r:p=>O(p)?`${f(O(p).allowed)} <span class="rk ${O(p).rank<=10?'up':O(p).rank>=21?'dn':''}">#${O(p).rank}</span>`:'–'}];
 function today(){TD=!TD;$('td').classList.toggle('on',TD);draw()}
 function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==11||i==12)?1:-1};draw()}
 const dd=(a,b)=>Math.round((Date.parse(b+'T12:00Z')-Date.parse(a+'T12:00Z'))/864e5);
+const erf=x=>{const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+.3275911*x);return s*(1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x))};
+const cdf=z=>.5*(1+erf(z/Math.SQRT2));
+let LM=null;
 function lean(p,l){
 if(isNaN(l))return null;
-if(p.gp<8)return{s:0,v:'Neither',w:[['Fewer than 8 games, sample too small',0]]};
-const w=[],add=(t,v)=>{if(v)w.push([t,v])},n=p.pra.length,k5=p.pra.slice(-5),sd=p.sd>0?p.sd:10;
-const pS=100*p.pra.filter(v=>v>l).length/n,p5=100*k5.filter(v=>v>l).length/k5.length;
-add('Season: over in '+Math.round(pS)+'% of games',pS>=70?2:pS>=60?1:pS<=30?-2:pS<=40?-1:0);
-add('Last 5: over in '+Math.round(p5)+'% of games',p5>=80?1:p5<=20?-1:0);
-const za=(p.avg-l)/sd;add('Season avg '+f(p.avg)+' vs line '+l,za>=.7?2:za>=.35?1:za<=-.7?-2:za<=-.35?-1:0);
-const z5=(p.l5-l)/sd;add('L5 avg '+f(p.l5)+' vs line',z5>=.5?1:z5<=-.5?-1:0);
-add('Minutes: last 5 '+f(p.l5min)+' vs season '+f(p.min),p.l5min>=p.min+3?1:p.l5min<=p.min-3?-1:0);
-const o=O(p);if(o)add('Opponent '+p.next.opp+' is #'+o.rank+' in PRA allowed',o.rank<=8?1:o.rank>=23?-1:0);
+if(p.gp<8)return{v:'Neither',p:.5,w:['Fewer than 8 games, sample too small']};
+if(LM==null){const a=Object.values(T).map(x=>x.allowed);LM=a.reduce((x,y)=>x+y,0)/a.length}
+const w=[],n=p.pra.length,sd=Math.max(p.sd||0,3),ppm=p.min>0?p.avg/p.min:0;
+let mu=.5*p.avg+.3*(p.l10??p.avg)+.2*p.l5;
+w.push('Base '+f(mu)+' (mix of season '+f(p.avg)+', last 10 and last 5 averages)');
+const adj=(t,v)=>{if(Math.abs(v)>=.2){mu+=v;w.push((v>0?'+':'')+f(v)+' '+t)}};
+adj('minutes: last 5 '+f(p.l5min)+' vs season '+f(p.min),(p.l5min-p.min)*ppm*.5);
+const o=O(p);if(o)adj('opponent '+p.next.opp+' (#'+o.rank+' in PRA allowed)',p.avg*((o.allowed-LM)/LM)*.5);
 if(p.next){const g=p.games[p.games.length-1];
-if(p.b2b&&g&&dd(g.d,gday(p.next))==1){const r=p.b2b.avg/p.avg;add('Back-to-back: avg '+f(p.b2b.avg)+' on 0 days rest',r>=1.05?1:r<=.93?-1:0)}
-const ha=p.next.home?p.home:p.away;if(ha!=null){const r=ha/p.avg;add((p.next.home?'Home':'Away')+' avg '+f(ha)+' vs season',r>=1.06?1:r<=.94?-1:0)}}
-const s=w.reduce((a,x)=>a+x[1],0);return{s,v:s>=4?'Over':s<=-4?'Under':'Neither',w}}
+if(p.b2b&&g&&dd(g.d,gday(p.next))==1)adj('back-to-back: avg '+f(p.b2b.avg)+' on 0 days rest',(p.b2b.avg-p.avg)*.3);
+const ha=p.next.home?p.home:p.away;if(ha!=null)adj((p.next.home?'home':'away')+' avg '+f(ha),(ha-p.avg)*.3)}
+const pz=cdf((mu-l)/sd),over=p.pra.filter(v=>v>l).length,pe=(over+5)/(n+10),pr=.6*pz+.4*pe;
+w.push('Expected PRA '+f(mu)+' vs line '+l+', typical swing '+f(sd));
+w.push('History: over this line in '+over+' of '+n+' games ('+Math.round(100*over/n)+'%)');
+return{v:pr>=.56?'Over':pr<=.44?'Under':'Neither',p:pr,w}}
 const lc=x=>x=='Over'?'up':x=='Under'?'dn':'';
+const lt=r=>r.v=='Neither'?'-':r.v+' '+Math.round(100*(r.v=='Over'?r.p:1-r.p))+'%';
 function lb(r,l){if(!r)return'<div class="hp" style="--c:var(--mu)"><span>Type a line in the table to see my lean for this player.</span></div>';
-return`<div class="hp" style="--c:var(--${r.v=='Over'?'up':r.v=='Under'?'dn':'mu'})"><b>Lean at ${l}: ${r.v=='Neither'?'No lean':r.v} (score ${r.s>0?'+':''}${r.s})</b><span>${r.w.length?r.w.map(x=>(x[1]>0?'+':'')+x[1]+' '+x[0]).join('<br>'):'No factor stands out.'}</span></div>`}
+return`<div class="hp" style="--c:var(--${r.v=='Over'?'up':r.v=='Under'?'dn':'mu'})"><b>Lean at ${l}: ${r.v=='Neither'?'No lean':lt(r)}</b><span>${r.w.join('<br>')}</span></div>`}
 function res(p){const l=parseFloat(lv(p)),a=$('s'+p.id),b=$('t'+p.id),c=$('l'+p.id);if(!a)return;
-if(isNaN(l)){a.innerHTML=b.innerHTML=c.innerHTML='<span class="mu">–</span>'}else{a.innerHTML=pc(p.pra,l);b.innerHTML=pc(p.pra.slice(-5),l);const r=lean(p,l);c.innerHTML=`<span class="ls ${lc(r.v)}">${r.v=='Neither'?'-':r.v}</span>`}}
+if(isNaN(l)){a.innerHTML=b.innerHTML=c.innerHTML='<span class="mu">–</span>'}else{a.innerHTML=pc(p.pra,l);b.innerHTML=pc(p.pra.slice(-5),l);const r=lean(p,l);c.innerHTML=`<span class="ls ${lc(r.v)}">${lt(r)}</span>`}}
 function ln(id,v){L[id]=v;try{localStorage.setItem('lines',JSON.stringify(L))}catch(e){}res(D.players.find(p=>p.id==id))}
 function draw(){
 $('th').innerHTML='<tr>'+C.map((c,i)=>`<th class="${c.g?'sb':''} ${S.k==i?'on':''} ${c.c||''}"${c.g?` onclick="srt(${i})"`:''}>${c.l}${S.k==i?(S.d<0?' ↓':' ↑'):''}</th>`).join('')+'</tr>';
@@ -148,13 +153,13 @@ $('o').style.display='flex'}
 function help(){
 const I=[['--t','Player','Rank number, a colored team badge, short name and games played. Tap the name for details: last 15 games, a chart with your line, std dev, home and away averages, back-to-back and rested averages, last 5 minutes, floors and the Lean breakdown.'],
 ['--t','Line, Over, Over L5','Lines are filled in automatically when available (dashed box). Otherwise, or to change one, type a line (for example 38.5). Over is how often he went over it this season, and Over L5 how often in his last 5 games. 60% 3/5 means he cleared it in 3 of his last 5. Green is 60% or more, red is 40% or less. Your lines are saved on your phone.'],
-['--t','Lean (my suggestion)','Shows Over, Under or - (no clear lean) once you type a line. It adds points for: season and last 5 over %, how far his season and L5 averages sit from the line (compared with how much he normally swings), his minutes trend, the opponent rank, a back-to-back, and home or away. +4 or more is Over, -4 or less is Under, anything between is -. Tap a name to see every point. It is a simple scoring rule, not a prediction. It does not know about injuries or lineup changes, and early-season samples are small.'],
+['--t','Lean (my suggestion)','Shows Over or Under with a rough chance, or - when it is too close to call. I estimate his PRA from a mix of his season, last 10 and last 5 averages, then adjust for his minutes trend, the opponent, a back-to-back and home or away. I compare that with your line using how much he normally swings (std dev), and blend in how often he went over this line this season. 56% or more is Over, 44% or less is Under. The percentage is a rough estimate from past games, not a true probability. It does not know about injuries or lineup changes. Tap a name to see how I got the number.'],
 ['--a','Avg','His mean PRA over the games he played this season.'],
 ['--f','L5 and Last 5 bars','L5 is his average over the last 5 games. The small bars show each of those games: green at or above his season average, red below, dashed line is the average.'],
 ['--l','Floor 90 and Floor 80','The PRA he reached or beat in at least 90% or 80% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
 ['--m','Minutes','His average minutes this season. More minutes usually means more PRA. Tap a name to see his last 5 minutes. If they dropped, recent numbers may overstate what he will do.'],
-['--m','Next opponent, Next game, Opp allowed','Next opponent is who he plays next (vs is home, @ is away). Next game is its date and tip-off time in Eastern time. Opp allowed is how many PRA that team gives up per game to all opposing players, with its rank: #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
-['--a','Search, team, Today, Top, Min games','Search a player by name. The team list marks teams with a game today with 🏀. Today shows only players whose team plays today (Eastern date). Top is how many rows to show, Min games hides players below that many games. If fewer than Top players qualify, players with fewer games are added to fill the list. Tap a column header to sort, tap again to reverse.']];
+['--n','Next, Date, Allowed','Next is who he plays next (vs is home, @ is away). Date is when, with tip-off time in Eastern time. Allowed is how many PRA that team gives up per game to all opposing players, with its rank: #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
+['--a','Search, team, Today, Top, Min GP','Search a player by name. The team list marks teams with a game today with 🏀. Today shows only players whose team plays today (Eastern date). Top is how many rows to show, Min GP hides players below that many games played. If fewer than Top players qualify, players with fewer games are added to fill the list. Tap a column header to sort, tap again to reverse.']];
 $('sh').innerHTML=`<div class="hd"><div><b>How to read this</b><div style="opacity:.9">Past stats, step by step</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">`+
 I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</span></div>`).join('')+
 `<div class="hh">A quick routine</div><div class="hp" style="--c:var(--up)"><span>1. Type the line. 2. Check Over and Over L5. 3. Compare the line with his floors. 4. Check form (L5, bars) and minutes. 5. Check the opponent rank. 6. Check injury and lineup news elsewhere, because this page does not have it and it often matters most.</span></div>
@@ -162,7 +167,7 @@ I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</
 $('o').style.display='flex'}
 fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('se').textContent='NBA regular season '+d.season;
 $('ch').innerHTML=`<span>Updated ${et(d.updated)}</span>`;
-if(d.lines_source)$('nt').textContent+=' Lines are filled in automatically from '+d.lines_source+' ('+d.lines_count+' players) and may differ from DraftKings or FanDuel. A dashed box is an automatic line. Type over it to change it; your typed lines are saved.';
+$('nt').textContent+=d.lines_source?' Lines are filled in automatically from '+d.lines_source+' ('+d.lines_count+' players) and may differ from other sportsbooks. A dashed box is an automatic line. Type over it to change it; your typed lines are saved.':(d.lines_status?' Automatic lines are unavailable right now ('+d.lines_status+'). You can type lines yourself.':'');
 TODAY=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
 const pt={};d.players.forEach(p=>{if(plays(p))pt[p.team]=1});
 const sel=$('tm');[...new Set(d.players.map(p=>p.team))].sort().forEach(t=>sel.add(new Option(t+(pt[t]?' 🏀':''),t)));
