@@ -315,20 +315,46 @@ def parse_ud(j, seen=None):
     return out
 
 
+class _Resp:
+    def __init__(self, code, text, content, jf):
+        self.status_code, self.ok, self.text, self.content, self._jf = code, code < 400, text, content, jf
+
+    def json(self):
+        return self._jf()
+
+
+def _ud_get(kind, u, hd):
+    if kind == "h1":
+        import requests
+        return requests.get(u, timeout=30, headers=hd)
+    try:
+        import httpx
+        import h2  # noqa: F401
+    except ImportError:
+        import subprocess
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "httpx[http2]"], check=True, timeout=120)
+        import httpx
+    with httpx.Client(http2=True, timeout=30) as c:
+        r = c.get(u, headers=hd)
+    return _Resp(r.status_code, r.text, r.content, r.json)
+
+
 def fetch_underdog():
-    import requests, uuid
+    import uuid
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d%H%M%S")
     errs = []
     for u in UD_URLS:
         v = u.split("/")[-2]
-        for cv in (stamp, "20991231235959"):
+        last = None
+        for kind, cv in (("h1", stamp), ("h1", "20991231235959"), ("h2", stamp)):
             hd = {"accept": "application/json", "accept-language": "en-US,en;q=0.9",
                   "origin": "https://underdogfantasy.com", "referer": "https://underdogfantasy.com/",
                   "client-type": "web", "client-version": cv, "client-device-id": str(uuid.uuid4()),
-                  "client-request-id": str(uuid.uuid4()), "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
+                  "client-request-id": str(uuid.uuid4()),
+                  "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}
             try:
-                r = requests.get(u, timeout=30, headers=hd)
-                print("Underdog", v, cv[:8], r.status_code, len(r.content), file=sys.stderr)
+                r = _ud_get(kind, u, hd)
+                print("Underdog", v, kind, cv[:8], r.status_code, len(r.content), file=sys.stderr)
                 if r.status_code == 426:
                     last = f"Underdog {v}: HTTP 426 {r.text[:50]!r}"
                     continue
@@ -347,10 +373,10 @@ def fetch_underdog():
                 errs.append(f"Underdog {v}: no PRA lines (keys seen: {', '.join(sorted(seen)[:8]) or 'none'}; top-level: {', '.join(list(j)[:6])})")
                 break
             except Exception as e:
-                errs.append(f"Underdog {v}: {str(e)[:60]}")
+                errs.append(f"Underdog {v} ({kind}): {str(e)[:60]}" + (f" after {last}" if last else ""))
                 break
         else:
-            errs.append(last)
+            errs.append(last + " (tried 2 versions + HTTP/2)")
     raise RuntimeError("; ".join(errs))
 
 
@@ -387,7 +413,7 @@ def fetch_odds_api(key, now):
 
 
 def get_lines(now):
-    status = []
+    status = ["script v3"]
     key = os.environ.get("ODDS_API_KEY", "").strip()
     if key:
         try:
