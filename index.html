@@ -65,6 +65,14 @@ tr:last-child td{border-bottom:0}
 .th2{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--sub);font-weight:700;font-size:13px}
 .pr{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--bd)}.pr:last-child{border-bottom:0}
 .fr,.cl{display:flex;gap:14px;text-align:center}.fr div,.cl b{width:44px}.cl{margin-left:auto}.cl b{font-size:11px;color:var(--mu)}.fb{font-weight:800;font-size:20px;color:var(--l)}
+button,select,th.sb,tbody td:first-child{cursor:pointer}
+button,.chip,.tab,th,.n,.hb,.x{transition:background .12s,color .12s,border-color .12s,box-shadow .12s,transform .12s}
+tbody tr:hover td{background-image:linear-gradient(rgba(124,58,237,.10),rgba(124,58,237,.10))}
+tbody td:first-child:hover .n{text-decoration:underline;color:var(--m)}
+th.sb:hover{background:var(--sub);text-decoration:underline}
+.chip:not(.on):hover,.tab:not(.on):hover,.bar select:hover{border-color:var(--m);color:var(--m)}
+.hb:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(0,0,0,.3)}
+.x:hover{background:rgba(255,255,255,.45)}
 </style></head><body>
 <div class="hero"><div class="hg"><h1>PRA Props</h1><button class="hb" onclick="help()">? Help</button><div class="sea" id="se">Loading…</div><div class="upd" id="ch"></div></div><input id="q" placeholder="Search a player"></div>
 <div class="tabs"><button class="tab on" id="t1" onclick="tab(1)">Players</button><button class="tab" id="t2" onclick="tab(2)">Bets</button></div>
@@ -176,7 +184,7 @@ function save(){try{localStorage.setItem('lines',JSON.stringify(L))}catch(e){}}
 function ln(id,v){if(String(v).trim()==='')delete L[id];else L[id]=v;save();res(D.players.find(p=>p.id==id))}
 function resetLines(){if(!confirm('Remove all the lines you typed and go back to the automatic lines?'))return;L={};try{localStorage.removeItem('lines')}catch(e){}$('o').style.display='none';draw();if($('v2').style.display!='none')bets()}
 function draw(){
-$('th').innerHTML='<tr>'+C.map((c,i)=>`<th class="${c.g?'sb':''} ${S.k==i?'on':''} ${c.c||''}"${c.g?` onclick="srt(${i})"`:''}>${c.l}${S.k==i?(S.d<0?' ↓':' ↑'):''}</th>`).join('')+'</tr>';
+$('th').innerHTML='<tr>'+C.map((c,i)=>`<th class="${c.g?'sb':''} ${S.k==i?'on':''} ${c.c||''}"${c.g?` onclick="srt(${i})" title="Click to sort"`:''}>${c.l}${S.k==i?(S.d<0?' ↓':' ↑'):''}</th>`).join('')+'</tr>';
 const q=$('q').value.toLowerCase();
 const mg=+$('mg').value,N=+$('tp').value||50;
 const base=D.players.filter(p=>(!TM||p.team==TM)&&(!TD||plays(p))&&p.name.toLowerCase().includes(q)).sort((x,y)=>y.avg-x.avg);
@@ -184,11 +192,11 @@ let a=base.filter(p=>p.gp>=mg),fill=0;
 if(a.length<N&&!q&&!TM){fill=Math.min(N-a.length,base.length-a.length);a=a.concat(base.filter(p=>p.gp<mg).slice(0,fill)).sort((x,y)=>y.avg-x.avg)}
 a=a.slice(0,N);
 const g=C[S.k].g;a.sort((x,y)=>{const u=g(x),v=g(y);if(u==null)return 1;if(v==null)return-1;return(u>v?1:u<v?-1:0)*S.d});
-$('b').innerHTML=a.map((p,r)=>{try{return '<tr>'+C.map((c,i)=>`<td class="${c.c||''}"${i==0?` onclick="det(${p.id})"`:''}>${c.r(p,r)}</td>`).join('')+'</tr>'}catch(e){console.log(e);return ''}}).join('');
+$('b').innerHTML=a.map((p,r)=>{try{return '<tr>'+C.map((c,i)=>`<td class="${c.c||''}"${i==0?` onclick="det(${p.id})" title="Click for details"`:''}>${c.r(p,r)}</td>`).join('')+'</tr>'}catch(e){console.log(e);return ''}}).join('');
 a.forEach(res);$('em').textContent=a.length?(fill?'Only '+(a.length-fill)+' players have '+mg+'+ games, so '+fill+' players with fewer games were added to fill the list.':''):(TD?'No players with a game today in the data. The data was last updated '+et(D.updated)+'.':'No players match.')}
 function det(id){const p=D.players.find(x=>x.id==id),l=parseFloat(lv(p)),G=p.games,has=!isNaN(l),mx=Math.max(...G.map(x=>x.pra),has?l:0)*1.12,W=340,H=140,bw=W/G.length;
-const bars=G.map((x,i)=>`<rect x="${i*bw+3}" y="${H-x.pra/mx*H}" width="${bw-6}" height="${x.pra/mx*H}" rx="4" fill="${has?(x.pra>l?'var(--up)':'var(--dn)'):'var(--a)'}"/>`).join('');
-const ly=has?`<line x1="0" x2="${W}" y1="${H-l/mx*H}" y2="${H-l/mx*H}" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/>`:'';
+const bars=G.map((x,i)=>`<rect x="${i*bw+3}" y="${H-x.pra/mx*H}" width="${bw-6}" height="${x.pra/mx*H}" rx="4" fill="${has?(x.pra>l?'var(--up)':'var(--dn)'):'var(--a)'}"/><text x="${i*bw+bw/2}" y="${Math.max(10,H-x.pra/mx*H-3)}" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--fg)">${x.pra}</text>`).join('');
+const ly=has?`<line x1="0" x2="${W}" y1="${H-l/mx*H}" y2="${H-l/mx*H}" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/><text x="${W-2}" y="${Math.max(10,H-l/mx*H-4)}" text-anchor="end" font-size="9.5" font-weight="700" fill="var(--fg)">line ${l}</text>`:'';
 const ls=has?lean(p,l):null;const tl=(a,b,c)=>`<div class="tl" style="--c:var(${c})"><div>${a}</div><div>${b}</div></div>`,sb=s=>s?f(s.avg)+' ('+s.n+')':'n/a';
 $('sh').innerHTML=`<div class="hd"><div><b>${p.name}</b><div style="opacity:.9">${p.team}, ${p.gp} games${p.line_book?', line from '+p.line_book+(p.line_books>1?' (+'+(p.line_books-1)+' more books)':''):''}</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">
 <div class="g">${tl('Std dev',f(p.sd),'--a')}${tl('Low to high',p.mn+' to '+p.mx,'--a')}${tl('L5 minutes',f(p.l5min),'--m')}${tl('Home avg',f(p.home),'--t')}${tl('Away avg',f(p.away),'--t')}${tl('Back-to-back',sb(p.b2b),'--f')}${tl('2+ days rest',sb(p.r2),'--f')}${tl('Floor 90',p.f90,'--l')}${tl('Floor 80',p.f80,'--l')}</div>
