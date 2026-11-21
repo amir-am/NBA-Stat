@@ -122,25 +122,35 @@ def main_lines(recs):
     return out
 
 
-def primary_lines(recs):
-    """Per player (earliest upcoming game): the first available book in PREFERRED order. Returns
-    {normalized name: {"line", "book", "books": n_books, "over_price", "under_price"}}"""
-    best = {}
-    for r in sorted(main_lines(recs), key=lambda r: str(r.get("commence_time") or "")):
-        k = norm_name(r["player"])
-        best.setdefault(k, {"event": r["event_id"], "rows": []})
-        if best[k]["event"] == r["event_id"]:
-            best[k]["rows"].append(r)
+def _et_date(t):
+    try:
+        from zoneinfo import ZoneInfo
+        return dt.datetime.fromisoformat(str(t).replace("Z", "+00:00")).astimezone(ZoneInfo("America/New_York")).date().isoformat()
+    except Exception:
+        return str(t)[:10]
 
-    def rank(r):
-        if r["book"] in PREFERRED:
-            return PREFERRED.index(r["book"])
-        return 50 if not r["dfs"] else 99
+
+def _rank(r):
+    if r["book"] in PREFERRED:
+        return PREFERRED.index(r["book"])
+    return 50 if not r["dfs"] else 99
+
+
+def primary_lines(recs):
+    """Per player: the line from the first available book in PREFERRED order, for each game date (US Eastern).
+    Returns {normalized name: {"line","book","books","over_price","under_price" (earliest date),
+                               "by_date": {date: {"line","book","books","over_price","under_price"}}}}"""
+    per = {}
+    for r in main_lines(recs):
+        per.setdefault(norm_name(r["player"]), {}).setdefault(_et_date(r.get("commence_time")), []).append(r)
     out = {}
-    for k, v in best.items():
-        r = min(v["rows"], key=rank)
-        out[k] = {"line": r["line"], "book": r["book_title"], "books": len({x["book"] for x in v["rows"]}),
-                  "over_price": r["over_price"], "under_price": r["under_price"]}
+    for k, days in per.items():
+        by = {}
+        for d, rows in days.items():
+            r = min(rows, key=_rank)
+            by[d] = {"line": r["line"], "book": r["book_title"], "books": len({x["book"] for x in rows}),
+                     "over_price": r["over_price"], "under_price": r["under_price"]}
+        out[k] = dict(by[min(by)], by_date=by)
     return out
 
 
