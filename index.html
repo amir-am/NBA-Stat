@@ -64,7 +64,7 @@ tr:last-child td{border-bottom:0}
 .gh{display:flex;align-items:center;gap:8px;padding:12px 14px;font-weight:800;border-bottom:1px solid var(--bd)}.gh .tp{margin-left:auto;font-weight:600;font-size:13px;color:var(--mu)}
 .th2{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--sub);font-weight:700;font-size:13px}
 .pr{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--bd)}.pr:last-child{border-bottom:0}
-.fb{font-weight:800;font-size:20px;color:var(--l);margin-right:8px}
+.fr,.cl{display:flex;gap:14px;text-align:center}.fr div,.cl b{width:44px}.cl{margin-left:auto}.cl b{font-size:11px;color:var(--mu)}.fb{font-weight:800;font-size:20px;color:var(--l)}
 </style></head><body>
 <div class="hero"><div class="hg"><h1>PRA Props</h1><button class="hb" onclick="help()">? Help</button><div class="sea" id="se">Loading…</div><div class="upd" id="ch"></div></div><input id="q" placeholder="Search a player"></div>
 <div class="tabs"><button class="tab on" id="t1" onclick="tab(1)">Players</button><button class="tab" id="t2" onclick="tab(2)">Bets</button></div>
@@ -120,24 +120,33 @@ function games(){
 if(D.schedule&&D.schedule.length)return D.schedule.map(g=>({date:g.date,utc:g.utc,home:g.home,away:g.away}));
 const m={};D.players.forEach(p=>{if(!p.next)return;const d=gday(p.next),h=p.next.home?p.team:p.next.opp,a=p.next.home?p.next.opp:p.team,k=d+h+a;m[k]=m[k]||{date:d,utc:p.next.utc,home:h,away:a}});
 return Object.values(m).sort((x,y)=>String(x.utc||x.date).localeCompare(String(y.utc||y.date)))}
+function lineFor(p,g){const u=L[p.id];if(u!==undefined&&u!==''){const v=parseFloat(u);if(!isNaN(v))return{l:v,src:'your line'}}
+const b=p.lines_by_date&&p.lines_by_date[g.date];if(b)return{l:b.line,src:b.book};
+if(p.line!=null&&p.next&&gday(p.next)==g.date)return{l:p.line,src:p.line_book||'auto'};return null}
+function picks(g){const o=[];[g.away,g.home].forEach(t=>D.players.filter(p=>p.team==t).forEach(p=>{const lf=lineFor(p,g);if(!lf)return;
+const r=lean(p,lf.l,{opp:t==g.home?g.away:g.home,home:t==g.home,utc:g.utc,date:g.date});if(r&&r.v!='Neither')o.push({p,t,l:lf.l,src:lf.src,r})}));
+return o.sort((a,b)=>Math.abs(b.r.p-.5)-Math.abs(a.r.p-.5))}
 function bets(){
-const G=games().filter(g=>g.date>=TODAY),days=[...new Set(G.map(g=>g.date))].slice(0,3),tmw=new Date(Date.parse(TODAY+'T12:00Z')+864e5).toISOString().slice(0,10);
-if(!days.length){$('v2').innerHTML='<div class="note" style="padding-top:16px">No upcoming games in the data yet. Run the workflow to refresh it.</div>';return}
+const tmw=new Date(Date.parse(TODAY+'T12:00Z')+864e5).toISOString().slice(0,10),G=games().filter(g=>g.date==TODAY||g.date==tmw),days=[TODAY,tmw].filter(d=>G.some(g=>g.date==d));
+if(!days.length){$('v2').innerHTML='<div class="note" style="padding-top:16px">No games today or tomorrow in the data yet. Run the workflow to refresh it.</div>';return}
 if(!days.includes(BD))BD=days.includes(TODAY)?TODAY:days[0];
 const lab=d=>d==TODAY?'Today':d==tmw?'Tomorrow':new Date(d+'T12:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'short',month:'short',day:'numeric'});
-const rows=t=>{const a=D.players.filter(p=>p.team==t&&p.f90>=10).sort((x,y)=>r5(y.f90)-r5(x.f90)||y.avg-x.avg);
-return a.length?a.map(p=>`<div class="pr"><div><div class="n">${sn(p.name)}</div><div class="mu">${p.gp} games, avg ${f(p.avg)}</div></div><div><span class="fb">${r5(p.f90)}</span><span class="mu">F90 ${p.f90}</span></div></div>`).join(''):'<div class="pr"><span class="mu">No players with a Floor 90 of 10 or more</span></div>'};
-$('v2').innerHTML='<div class="days">'+days.map(d=>`<button class="chip ${d==BD?'on':''}" onclick="setDay('${d}')">${lab(d)}</button>`).join('')+'</div>'+
-G.filter(g=>g.date==BD).map(g=>`<div class="gc"><div class="gh">${logo(g.away)}<span>${g.away} @ ${g.home}</span>${logo(g.home)}<span class="tp">${g.utc&&gtime(g)?gtime(g)+' ET':''}</span></div>
-<div class="th2">${logo(g.away)} ${g.away}</div>${rows(g.away)}<div class="th2">${logo(g.home)} ${g.home}</div>${rows(g.home)}</div>`).join('')+
-'<div class="note">The big number is each player\'s Floor 90 rounded down to the nearest 5 (42 becomes 40, 39 becomes 35, minimum 10). Floor 90 is the PRA he reached or beat in at least 90% of his games. Past results, not predictions.</div>'}
+const rows=t=>{const a=D.players.filter(p=>p.team==t&&p.f90>=10).sort((x,y)=>r5(y.f90)-r5(x.f90)||r5(y.f80)-r5(x.f80)||y.avg-x.avg);
+return a.length?a.map(p=>`<div class="pr"><div><div class="n">${sn(p.name)}</div><div class="mu">${p.gp} games, avg ${f(p.avg)}</div></div><div class="fr"><div class="fb">${r5(p.f90)}</div><div class="fb">${r5(p.f80)}</div></div></div>`).join(''):'<div class="pr"><span class="mu">No players with a Floor 90 of 10 or more</span></div>'};
+const pk=g=>{const a=picks(g);return`<div class="th2">Lean picks (${a.length})</div>`+(a.length?a.map(x=>`<div class="pr"><div><div class="n">${sn(x.p.name)}</div><div class="mu">${x.t}, line from ${x.src}</div></div><span class="ls ${lc(x.r.v)}">${x.r.v} ${x.l}</span></div>`).join(''):'<div class="pr"><span class="mu">No Over or Under picks for this game (or no lines yet)</span></div>')};
+const day=G.filter(g=>g.date==BD),tot=day.reduce((s,g)=>s+picks(g).length,0);
+$('v2').innerHTML='<div class="days">'+days.map(d=>`<button class="chip ${d==BD?'on':''}" onclick="setDay('${d}')">${lab(d)}</button>`).join('')+`</div><div class="note" style="padding:4px 16px 0"><b>${tot}</b> lean picks across ${day.length} games.</div>`+
+day.map(g=>`<div class="gc"><div class="gh">${logo(g.away)}<span>${g.away} @ ${g.home}</span>${logo(g.home)}<span class="tp">${g.utc&&gtime(g)?gtime(g)+' ET':''}</span></div>${pk(g)}
+<div class="th2">${logo(g.away)} ${g.away}<span class="cl"><b>F90</b><b>F80</b></span></div>${rows(g.away)}<div class="th2">${logo(g.home)} ${g.home}<span class="cl"><b>F90</b><b>F80</b></span></div>${rows(g.home)}</div>`).join('')+
+'<div class="note">The two numbers by each player are his Floor 90 (F90) and Floor 80 (F80) rounded down to the nearest 5 (42 becomes 40, 39 becomes 35, minimum 10). Floor 90 is the PRA he reached or beat in at least 90% of his games, Floor 80 in at least 80%. Lean picks use the same rule as the Lean column, with the line from PropLine (or the line you typed). Past results, not predictions.</div>'}
 function today(){TD=!TD;$('td').classList.toggle('on',TD);draw()}
 function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==11||i==12)?1:-1};draw()}
 const dd=(a,b)=>Math.round((Date.parse(b+'T12:00Z')-Date.parse(a+'T12:00Z'))/864e5);
 const erf=x=>{const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+.3275911*x);return s*(1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x))};
 const cdf=z=>.5*(1+erf(z/Math.SQRT2));
+const LP=.58,LZ=.25;
 let LM=null;
-function lean(p,l){
+function lean(p,l,nx){const N=nx||p.next;
 if(isNaN(l))return null;
 if(p.gp<8)return{v:'Neither',p:.5,w:['Fewer than 8 games, sample too small']};
 if(LM==null){const a=Object.values(T).map(x=>x.allowed);LM=a.reduce((x,y)=>x+y,0)/a.length}
@@ -146,15 +155,15 @@ let mu=.5*p.avg+.3*(p.l10??p.avg)+.2*p.l5;
 w.push('Base '+f(mu)+' (mix of season '+f(p.avg)+', last 10 and last 5 averages)');
 const adj=(t,v)=>{if(Math.abs(v)>=.2){mu+=v;w.push((v>0?'+':'')+f(v)+' '+t)}};
 adj('minutes: last 5 '+f(p.l5min)+' vs season '+f(p.min),(p.l5min-p.min)*ppm*.5);
-const o=O(p);if(o)adj('opponent '+p.next.opp+' (#'+o.rank+' in PRA allowed)',p.avg*((o.allowed-LM)/LM)*.5);
-if(p.next){const g=p.games[p.games.length-1];
-if(p.b2b&&g&&dd(g.d,gday(p.next))==1)adj('back-to-back: avg '+f(p.b2b.avg)+' on 0 days rest',(p.b2b.avg-p.avg)*.3);
-const ha=p.next.home?p.home:p.away;if(ha!=null)adj((p.next.home?'home':'away')+' avg '+f(ha),(ha-p.avg)*.3)}
+const o=N&&T[N.opp];if(o)adj('opponent '+N.opp+' (#'+o.rank+' in PRA allowed)',p.avg*((o.allowed-LM)/LM)*.5);
+if(N){const g=p.games[p.games.length-1],ld=(nx&&p.next&&gday(p.next)<gday(nx))?gday(p.next):(g&&g.d);
+if(p.b2b&&ld&&dd(ld,gday(N))==1)adj('back-to-back: avg '+f(p.b2b.avg)+' on 0 days rest',(p.b2b.avg-p.avg)*.3);
+const ha=N.home?p.home:p.away;if(ha!=null)adj((N.home?'home':'away')+' avg '+f(ha),(ha-p.avg)*.3)}
 const pz=cdf((mu-l)/sd),over=p.pra.filter(v=>v>l).length,pe=(over+5)/(n+10),pr=.6*pz+.4*pe;
 w.push('Expected PRA '+f(mu)+' vs line '+l+', typical swing '+f(sd));
 w.push('History: over this line in '+over+' of '+n+' games ('+Math.round(100*over/n)+'%)');
 const gz=(mu-l)/sd;w.push('Rule: Over needs my estimate above the line and his season avg above it; Under is the reverse');
-return{v:(pr>=.54&&p.avg>=l&&gz>=.15)?'Over':(pr<=.46&&p.avg<=l&&gz<=-.15)?'Under':'Neither',p:pr,w}}
+return{v:(pr>=LP&&p.avg>=l&&gz>=LZ)?'Over':(pr<=1-LP&&p.avg<=l&&gz<=-LZ)?'Under':'Neither',p:pr,w}}
 const lc=x=>x=='Over'?'up':x=='Under'?'dn':'';
 const lt=r=>r.v=='Neither'?'-':r.v;
 function lb(r,l){if(!r)return'<div class="hp" style="--c:var(--mu)"><span>Type a line in the table to see my lean for this player.</span></div>';
@@ -193,7 +202,7 @@ const I=[['--t','Player','Rank number, a colored team badge, short name and game
 ['--l','Floor 90 and Floor 80','The PRA he reached or beat in at least 90% or 80% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
 ['--m','Minutes','His average minutes this season. More minutes usually means more PRA. Tap a name to see his last 5 minutes. If they dropped, recent numbers may overstate what he will do.'],
 ['--n','Next, Date, Allowed','Next is who he plays next (vs is home, @ is away). Date is when, with tip-off time in Eastern time. Allowed is how many PRA that team gives up per game to all opposing players, with its rank: #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
-['--l','Bets tab','Lists the games for today (or the next game day) with each team\'s players and their Floor 90 rounded down to the nearest 5, for example 42 becomes 40 and 39 becomes 35, with a minimum of 10. Players whose Floor 90 is below 10 are left out. Use the day buttons to switch between days. It is a quick list of the safest past-performance levels, not a prediction.'],
+['--l','Bets tab','Lists the games for today and tomorrow. Each game starts with its Over and Under lean picks (same rule as the Lean column, using the line from PropLine or the one you typed), then each team\'s players with their Floor 90 and Floor 80 rounded down to the nearest 5, for example 42 becomes 40 and 39 becomes 35, minimum 10. Players whose Floor 90 is below 10 are left out. Use the day buttons to switch between days. It is a quick list of the safest past-performance levels, not a prediction.'],
 ['--a','Search, team, Today, Top, Min GP','Search a player by name. The team list marks teams with a game today with 🏀. Today shows only players whose team plays today (Eastern date). Top is how many rows to show, Min GP hides players below that many games played. If fewer than Top players qualify, players with fewer games are added to fill the list. Tap a column header to sort, tap again to reverse.']];
 $('sh').innerHTML=`<div class="hd"><div><b>How to read this</b><div style="opacity:.9">Past stats, step by step</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">`+
 I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</span></div>`).join('')+
