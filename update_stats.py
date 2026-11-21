@@ -322,13 +322,29 @@ def fetch_odds_api(key, now):
 
 
 def get_lines(now):
+    """Returns ({normalized name: line or {"line","book","books"}}, source label, [problems])."""
+    status = []
+    pk = os.environ.get("PROPLINE_API_KEY", "").strip()
+    if pk:
+        try:
+            import propline_lines as pl
+            recs, notes = pl.fetch_all(pk, now)
+            best = pl.primary_lines(recs)
+            if best:
+                print(f"PropLine: {len(recs)} lines from {len({r['book'] for r in recs})} books; {'; '.join(notes)}")
+                return best, "PropLine", status
+            status.append("PropLine: no PRA lines returned (" + "; ".join(notes)[:150] + ")")
+        except ImportError:
+            status.append("propline_lines.py is missing from the repo (upload it next to update_stats.py)")
+        except Exception as e:
+            status.append(str(e)[:200])
     key = os.environ.get("ODDS_API_KEY", "").strip()
-    if not key:
-        return {}, None, []
-    try:
-        return fetch_odds_api(key, now), "DraftKings/FanDuel (The Odds API)", []
-    except Exception as e:
-        return {}, None, [str(e)[:300]]
+    if key:
+        try:
+            return fetch_odds_api(key, now), "DraftKings/FanDuel (The Odds API)", status
+        except Exception as e:
+            status.append(str(e)[:200])
+    return {}, None, status
 
 
 def build(rows, sched, season, now):
@@ -430,7 +446,10 @@ def main():
         for p in out["players"]:
             v = lines.get(norm_name(p["name"]))
             if v is not None:
-                p["line"] = v
+                if isinstance(v, dict):
+                    p["line"], p["line_book"], p["line_books"] = v["line"], v["book"], v["books"]
+                else:
+                    p["line"] = v
                 n += 1
         out["lines_source"], out["lines_count"] = src, n
         print(f"lines matched: {n} of {len(lines)} ({src})")
