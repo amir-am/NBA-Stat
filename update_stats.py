@@ -380,6 +380,16 @@ def build(rows, sched, season, now):
                 for me, op, ih in ((h, a, True), (a, h, False)):
                     if me and op and (me not in nxt or t < nxt[me][0]):
                         nxt[me] = (t, {"opp": op, "home": ih, "date": et_iso(t), "utc": t})
+    sch = []
+    for gd in (sched or {}).get("leagueSchedule", {}).get("gameDates", []):
+        for g in gd["games"]:
+            if g["gameStatus"] == 1 and str(g["gameId"]).startswith("002"):
+                h_, a_, t_ = g["homeTeam"]["teamTricode"], g["awayTeam"]["teamTricode"], g["gameDateTimeUTC"]
+                if h_ and a_:
+                    sch.append({"utc": t_, "date": et_iso(t_), "home": h_, "away": a_})
+    sch.sort(key=lambda x: x["utc"])
+    days_ = sorted({x["date"] for x in sch})[:3]
+    sch = [x for x in sch if x["date"] in days_]
     by = defaultdict(list)
     for x in sorted(R, key=lambda x: x["date"]):
         by[x["id"]].append(x)
@@ -405,7 +415,7 @@ def build(rows, sched, season, now):
                         a=x["ast"], pra=x["pra"]) for x in g[-15:]]))
     P.sort(key=lambda p: -p["avg"])
     return {"season": season, "updated": now.strftime("%Y-%m-%d %H:%M UTC"), "players": P[:500], "teams": teams,
-            "through": max((x["date"] for x in R), default=None)}
+            "through": max((x["date"] for x in R), default=None), "schedule": sch}
 
 
 def main():
