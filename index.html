@@ -144,11 +144,11 @@ function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==11||i==12)?1:-1};draw()}
 const dd=(a,b)=>Math.round((Date.parse(b+'T12:00Z')-Date.parse(a+'T12:00Z'))/864e5);
 const erf=x=>{const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+.3275911*x);return s*(1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x))};
 const cdf=z=>.5*(1+erf(z/Math.SQRT2));
-const LP=.58,LZ=.25;
+const LP=.62,LZ=.35,LH=.55;
 let LM=null;
 function lean(p,l,nx){const N=nx||p.next;
 if(isNaN(l))return null;
-if(p.gp<8)return{v:'Neither',p:.5,w:['Fewer than 8 games, sample too small']};
+if(p.gp<10)return{v:'Neither',p:.5,w:['Fewer than 10 games, sample too small']};
 if(LM==null){const a=Object.values(T).map(x=>x.allowed);LM=a.reduce((x,y)=>x+y,0)/a.length}
 const w=[],n=p.pra.length,sd=Math.max(p.sd||0,3),ppm=p.min>0?p.avg/p.min:0;
 let mu=.5*p.avg+.3*(p.l10??p.avg)+.2*p.l5;
@@ -162,8 +162,9 @@ const ha=N.home?p.home:p.away;if(ha!=null)adj((N.home?'home':'away')+' avg '+f(h
 const pz=cdf((mu-l)/sd),over=p.pra.filter(v=>v>l).length,pe=(over+5)/(n+10),pr=.6*pz+.4*pe;
 w.push('Expected PRA '+f(mu)+' vs line '+l+', typical swing '+f(sd));
 w.push('History: over this line in '+over+' of '+n+' games ('+Math.round(100*over/n)+'%)');
-const gz=(mu-l)/sd;w.push('Rule: Over needs my estimate above the line and his season avg above it; Under is the reverse');
-return{v:(pr>=LP&&p.avg>=l&&gz>=LZ)?'Over':(pr<=1-LP&&p.avg<=l&&gz<=-LZ)?'Under':'Neither',p:pr,w}}
+const gz=(mu-l)/sd;w.push('Rule: Over needs my estimate, his season avg and his last 5 avg all above the line, and over it in more than half his games; Under is the reverse');
+const os=over/n;
+return{v:(pr>=LP&&p.avg>=l&&p.l5>=l&&gz>=LZ&&os>=LH)?'Over':(pr<=1-LP&&p.avg<=l&&p.l5<=l&&gz<=-LZ&&os<=1-LH)?'Under':'Neither',p:pr,w}}
 const lc=x=>x=='Over'?'up':x=='Under'?'dn':'';
 const lt=r=>r.v=='Neither'?'-':r.v;
 function lb(r,l){if(!r)return'<div class="hp" style="--c:var(--mu)"><span>Type a line in the table to see my lean for this player.</span></div>';
@@ -196,7 +197,7 @@ $('o').style.display='flex'}
 function help(){
 const I=[['--t','Player','Rank number, a colored team badge, short name and games played. Tap the name for details: last 15 games, a chart with your line, std dev, home and away averages, back-to-back and rested averages, last 5 minutes, floors and the Lean breakdown.'],
 ['--t','Line, Over, Over L5','Type the sportsbook line for a player (for example 38.5). Lines fill in automatically (dashed box) when a free PropLine key is set up in your repo. Over is how often he went over it this season, and Over L5 how often in his last 5 games. 60% 3/5 means he cleared it in 3 of his last 5. Green is 60% or more, red is 40% or less. Your lines are saved on your phone.'],
-['--t','Lean (my suggestion)','Shows Over or Under once you type a line, or - when it is too close to call. I estimate his PRA from a mix of his season, last 10 and last 5 averages, adjusted for his minutes trend, the opponent, a back-to-back and home or away. I compare that with your line using how much he normally swings (std dev) and how often he went over this line. I only say Over when my estimate and his season average are both clearly above the line, and Under when both are clearly below. It does not know about injuries or lineup changes. Tap a name to see how I got it.'],
+['--t','Lean (my suggestion)','Shows Over or Under once you type a line, or - when it is too close to call. I estimate his PRA from a mix of his season, last 10 and last 5 averages, adjusted for his minutes trend, the opponent, a back-to-back and home or away. I compare that with your line using how much he normally swings (std dev) and how often he went over this line. I only say Over when my estimate, his season average and his last 5 average are all clearly above the line, he went over it in more than half his games, and he has 10 or more games. Under is the reverse. It does not know about injuries or lineup changes. Tap a name to see how I got it.'],
 ['--a','Avg','His mean PRA over the games he played this season.'],
 ['--f','L5 and Last 5 bars','L5 is his average over the last 5 games. The small bars show each of those games: green at or above his season average, red below, dashed line is the average.'],
 ['--l','Floor 90 and Floor 80','The PRA he reached or beat in at least 90% or 80% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
