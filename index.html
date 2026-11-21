@@ -127,8 +127,8 @@ function picks(g){const o=[];[g.away,g.home].forEach(t=>D.players.filter(p=>p.te
 const r=lean(p,lf.l,{opp:t==g.home?g.away:g.home,home:t==g.home,utc:g.utc,date:g.date});if(r&&r.v!='Neither')o.push({p,t,l:lf.l,src:lf.src,r})}));
 return o.sort((a,b)=>Math.abs(b.r.p-.5)-Math.abs(a.r.p-.5))}
 function bets(){
-const tmw=new Date(Date.parse(TODAY+'T12:00Z')+864e5).toISOString().slice(0,10),G=games().filter(g=>g.date==TODAY||g.date==tmw),days=[TODAY,tmw].filter(d=>G.some(g=>g.date==d));
-if(!days.length){$('v2').innerHTML='<div class="note" style="padding-top:16px">No games today or tomorrow in the data yet. Run the workflow to refresh it.</div>';return}
+const tmw=new Date(Date.parse(TODAY+'T12:00Z')+864e5).toISOString().slice(0,10),G=games().filter(g=>(g.date==TODAY||g.date==tmw)&&!(pd(g.utc)&&pd(g.utc)<=new Date())),days=[TODAY,tmw].filter(d=>G.some(g=>g.date==d));
+if(!days.length){$('v2').innerHTML='<div class="note" style="padding-top:16px">No upcoming games today or tomorrow (games that have already started are hidden).</div>';return}
 if(!days.includes(BD))BD=days.includes(TODAY)?TODAY:days[0];
 const lab=d=>d==TODAY?'Today':d==tmw?'Tomorrow':new Date(d+'T12:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'short',month:'short',day:'numeric'});
 const rows=t=>{const a=D.players.filter(p=>p.team==t&&p.f90>=10).sort((x,y)=>r5(y.f90)-r5(x.f90)||r5(y.f80)-r5(x.f80)||y.avg-x.avg);
@@ -202,13 +202,14 @@ const I=[['--t','Player','Rank number, a colored team badge, short name and game
 ['--l','Floor 90 and Floor 80','The PRA he reached or beat in at least 90% or 80% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
 ['--m','Minutes','His average minutes this season. More minutes usually means more PRA. Tap a name to see his last 5 minutes. If they dropped, recent numbers may overstate what he will do.'],
 ['--n','Next, Date, Allowed','Next is who he plays next (vs is home, @ is away). Date is when, with tip-off time in Eastern time. Allowed is how many PRA that team gives up per game to all opposing players, with its rank: #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
-['--l','Bets tab','Lists the games for today and tomorrow. Each game starts with its Over and Under lean picks (same rule as the Lean column, using the line from PropLine or the one you typed), then each team\'s players with their Floor 90 and Floor 80 rounded down to the nearest 5, for example 42 becomes 40 and 39 becomes 35, minimum 10. Players whose Floor 90 is below 10 are left out. Use the day buttons to switch between days. It is a quick list of the safest past-performance levels, not a prediction.'],
+['--l','Bets tab','Lists the games for today and tomorrow that have not started yet (a game disappears when it tips off). Each game starts with its Over and Under lean picks (same rule as the Lean column, using the line from PropLine or the one you typed), then each team\'s players with their Floor 90 and Floor 80 rounded down to the nearest 5, for example 42 becomes 40 and 39 becomes 35, minimum 10. Players whose Floor 90 is below 10 are left out. Use the day buttons to switch between days. It is a quick list of the safest past-performance levels, not a prediction.'],
 ['--a','Search, team, Today, Top, Min GP','Search a player by name. The team list marks teams with a game today with 🏀. Today shows only players whose team plays today (Eastern date). Top is how many rows to show, Min GP hides players below that many games played. If fewer than Top players qualify, players with fewer games are added to fill the list. Tap a column header to sort, tap again to reverse.']];
 $('sh').innerHTML=`<div class="hd"><div><b>How to read this</b><div style="opacity:.9">Past stats, step by step</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">`+
 I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</span></div>`).join('')+
 `<div class="hh">A quick routine</div><div class="hp" style="--c:var(--up)"><span>1. Type the line. 2. Check Over and Over L5. 3. Compare the line with his floors. 4. Check form (L5, bars) and minutes. 5. Check the opponent rank. 6. Check injury and lineup news elsewhere, because this page does not have it and it often matters most.</span></div>
 <div class="hh">Keep in mind</div><div class="hp" style="--c:var(--dn)"><span>These are past results, not predictions. Sportsbooks already price in most of this. Early in the season the samples are small. At typical odds of -110 you need to win about 52.4% of bets just to break even, so a 60% hit rate over 5 games is not a proven edge. Only bet what you can afford to lose.</span></div></div>`;
 $('o').style.display='flex'}
+setInterval(()=>{if(D&&$('v2').style.display!='none')bets()},60000);
 fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('se').textContent='NBA regular season '+d.season;
 $('ch').innerHTML=`<span>Updated ${et(d.updated)}</span>`;
 if(d.lines_source)$('nt').textContent+=' Lines are filled in automatically from '+d.lines_source+' ('+d.lines_count+' players). A dashed box is an automatic line. Type over it to change it; your typed lines are saved.';
