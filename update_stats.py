@@ -458,6 +458,8 @@ def main():
             if v is not None:
                 if isinstance(v, dict):
                     p["line"], p["line_book"], p["line_books"] = v["line"], v["book"], v["books"]
+                    if v.get("by_date"):
+                        p["lines_by_date"] = {d: {"line": x["line"], "book": x["book"]} for d, x in v["by_date"].items()}
                 else:
                     p["line"] = v
                 n += 1
