@@ -17,6 +17,7 @@ jobs:
       - run: pip install nba_api requests
       - run: python update_stats.py
         env:
+          PROPLINE_API_KEY: ${{ secrets.PROPLINE_API_KEY }}
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
       - name: Commit if changed
         run: |
