@@ -86,7 +86,8 @@ const sn=s=>{const a=String(s||'').trim().split(/\s+/);return a.length<2||/\./.t
 const LG={GSW:'gs',NYK:'ny',SAS:'sa',NOP:'no',UTA:'utah',WAS:'wsh'};
 const logo=t=>`<img class="lg" alt="${t}" src="https://a.espncdn.com/i/teamlogos/nba/500/${LG[t]||String(t).toLowerCase()}.png" onerror="fb(this)">`;
 function fb(i){const t=i.alt;i.outerHTML=`<div class="av" style="background:hsl(${hue(t)} 72% 46%)">${t}</div>`}
-const lv=p=>L[p.id]!==undefined?L[p.id]:(p.line??'');
+const typed=p=>L[p.id]!==undefined&&L[p.id]!=='';
+const lv=p=>typed(p)?L[p.id]:(p.line??'');
 const f=(x,n=1)=>x==null?'–':(+x).toFixed(n);
 const hue=s=>[...String(s||'?')].reduce((a,c)=>a*31+c.charCodeAt(0),7)%360;
 const pc=(a,l)=>{const c=a.filter(v=>v>l).length,n=a.length,p=Math.round(100*c/n);return`<span class="pc ${p>=60?'up':p<=40?'dn':''}">${p}% <small>${c}/${n}</small></span>`};
@@ -100,7 +101,7 @@ const tr=p=>p.l5>=p.avg*1.15?'up':p.l5<=p.avg*.85?'dn':'';
 const spark=p=>{const v=p.pra.slice(-5),m=Math.max(...v,p.avg)*1.08;return`<svg width="70" height="26" viewBox="0 0 70 26">`+v.map((x,i)=>`<rect x="${i*14}" y="${26-x/m*26}" width="11" height="${x/m*26}" rx="3" fill="var(${x>=p.avg?'--up':'--dn'})"/>`).join('')+`<line x1="0" x2="70" y1="${26-p.avg/m*26}" y2="${26-p.avg/m*26}" stroke="var(--fg)" stroke-width=".8" stroke-dasharray="2 2" opacity=".55"/></svg>`};
 const C=[
 {l:'Player',g:p=>p.name,r:(p,i)=>`<div class="who"><span class="no">${i+1}</span>${logo(p.team)}<div><div class="n">${sn(p.name)}</div><div class="mu">${p.gp} games</div></div></div>`},
-{l:'Line',c:'gt',r:p=>`<input class="ln${L[p.id]===undefined&&p.line!=null?' auto':''}" inputmode="decimal" placeholder="–" value="${lv(p)}" oninput="this.classList.remove('auto');ln(${p.id},this.value)">`},
+{l:'Line',c:'gt',r:p=>`<input class="ln${!typed(p)&&p.line!=null?' auto':''}" inputmode="decimal" placeholder="–" value="${lv(p)}" oninput="this.classList.remove('auto');ln(${p.id},this.value)" onchange="if(!this.value.trim())draw()">`},
 {l:'Over',c:'gt',r:p=>`<span id="s${p.id}"></span>`},
 {l:'Over L5',c:'gt',r:p=>`<span id="t${p.id}"></span>`},
 {l:'Lean',c:'gt',r:p=>`<span id="l${p.id}"></span>`},
@@ -171,7 +172,9 @@ function lb(r,l){if(!r)return'<div class="hp" style="--c:var(--mu)"><span>Type a
 return`<div class="hp" style="--c:var(--${r.v=='Over'?'up':r.v=='Under'?'dn':'mu'})"><b>Lean at ${l}: ${r.v=='Neither'?'No lean':r.v}</b><span>${r.w.join('<br>')}</span></div>`}
 function res(p){const l=parseFloat(lv(p)),a=$('s'+p.id),b=$('t'+p.id),c=$('l'+p.id);if(!a)return;
 if(isNaN(l)){a.innerHTML=b.innerHTML=c.innerHTML='<span class="mu">–</span>'}else{a.innerHTML=pc(p.pra,l);b.innerHTML=pc(p.pra.slice(-5),l);const r=lean(p,l);c.innerHTML=`<span class="ls ${lc(r.v)}">${lt(r)}</span>`}}
-function ln(id,v){L[id]=v;try{localStorage.setItem('lines',JSON.stringify(L))}catch(e){}res(D.players.find(p=>p.id==id))}
+function save(){try{localStorage.setItem('lines',JSON.stringify(L))}catch(e){}}
+function ln(id,v){if(String(v).trim()==='')delete L[id];else L[id]=v;save();res(D.players.find(p=>p.id==id))}
+function resetLines(){if(!confirm('Remove all the lines you typed and go back to the automatic lines?'))return;L={};try{localStorage.removeItem('lines')}catch(e){}$('o').style.display='none';draw();if($('v2').style.display!='none')bets()}
 function draw(){
 $('th').innerHTML='<tr>'+C.map((c,i)=>`<th class="${c.g?'sb':''} ${S.k==i?'on':''} ${c.c||''}"${c.g?` onclick="srt(${i})"`:''}>${c.l}${S.k==i?(S.d<0?' ↓':' ↑'):''}</th>`).join('')+'</tr>';
 const q=$('q').value.toLowerCase();
@@ -208,7 +211,7 @@ const I=[['--t','Player','Rank number, a colored team badge, short name and game
 $('sh').innerHTML=`<div class="hd"><div><b>How to read this</b><div style="opacity:.9">Past stats, step by step</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">`+
 I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</span></div>`).join('')+
 `<div class="hh">A quick routine</div><div class="hp" style="--c:var(--up)"><span>1. Type the line. 2. Check Over and Over L5. 3. Compare the line with his floors. 4. Check form (L5, bars) and minutes. 5. Check the opponent rank. 6. Check injury and lineup news elsewhere, because this page does not have it and it often matters most.</span></div>
-<div class="hh">Keep in mind</div><div class="hp" style="--c:var(--dn)"><span>These are past results, not predictions. Sportsbooks already price in most of this. Early in the season the samples are small. At typical odds of -110 you need to win about 52.4% of bets just to break even, so a 60% hit rate over 5 games is not a proven edge. Only bet what you can afford to lose.</span></div></div>`;
+<div class="hh">Keep in mind</div><div class="hp" style="--c:var(--dn)"><span>These are past results, not predictions. Sportsbooks already price in most of this. Early in the season the samples are small. At typical odds of -110 you need to win about 52.4% of bets just to break even, so a 60% hit rate over 5 games is not a proven edge. Only bet what you can afford to lose.</span></div><div class="hh">Your typed lines</div><div class="hp" style="--c:var(--t)"><span>Lines you type are saved on this phone and replace the automatic lines. Clear a single box to bring its automatic line back, or clear them all: <button class="chip" onclick="resetLines()">Clear my typed lines</button></span></div></div>`;
 $('o').style.display='flex'}
 setInterval(()=>{if(D&&$('v2').style.display!='none')bets()},60000);
 fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('se').textContent='NBA regular season '+d.season;
