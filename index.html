@@ -77,6 +77,7 @@ th,td{padding:9px 8px}
 th{white-space:normal;line-height:1.2;vertical-align:bottom}th:first-child{text-align:left}
 .pc{min-width:0;padding:3px 7px}.ls{min-width:0;padding:3px 8px}.ln{width:54px}
 .fr .fb:first-child,.cl b:first-child{color:var(--up)}.fr .fb:last-child,.cl b:last-child{color:var(--a)}
+.hd .lg{background:#fff;border-radius:50%;padding:3px}.hd .x{font-size:20px;line-height:1}.bd .ln{margin-right:6px}
 </style></head><body>
 <div class="hero"><div class="hg"><h1>PRA Props</h1><button class="hb" onclick="help()">? Help</button><div class="sea" id="se">Loading…</div><div class="upd" id="ch"></div></div><input id="q" placeholder="Search a player"></div>
 <div class="tabs"><button class="tab on" id="t1" onclick="tab(1)">Players</button><button class="tab" id="t2" onclick="tab(2)">Bets</button></div>
@@ -91,7 +92,7 @@ th{white-space:normal;line-height:1.2;vertical-align:bottom}th:first-child{text-
 <div id="o" onclick="if(event.target==this)this.style.display='none'"><div class="sh" id="sh"></div></div>
 <script>
 const $=i=>document.getElementById(i);
-let D,T,S={k:5,d:-1},L={},TM='',TD=false,TODAY='';
+let VIS=[],D,T,S={k:1,d:-1},L={},TM='',TD=false,TODAY='';
 try{L=JSON.parse(localStorage.getItem('lines')||'{}')}catch(e){}
 const et=s=>{try{const d=new Date(s.replace(' UTC','Z').replace(' ','T'));return d.toLocaleString('en-US',{timeZone:'America/New_York',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+' ET'}catch(e){return s}};
 const sn=s=>{const a=String(s||'').trim().split(/\s+/);return a.length<2||/\./.test(a[0])?s:a[0][0]+'. '+a.slice(1).join(' ')};
@@ -113,14 +114,14 @@ const tr=p=>p.l5>=p.avg*1.15?'up':p.l5<=p.avg*.85?'dn':'';
 const spark=p=>{const v=p.pra.slice(-5),m=Math.max(...v,p.avg)*1.08;return`<svg width="70" height="26" viewBox="0 0 70 26">`+v.map((x,i)=>`<rect x="${i*14}" y="${26-x/m*26}" width="11" height="${x/m*26}" rx="3" fill="var(${x>=p.avg?'--up':'--dn'})"/>`).join('')+`<line x1="0" x2="70" y1="${26-p.avg/m*26}" y2="${26-p.avg/m*26}" stroke="var(--fg)" stroke-width=".8" stroke-dasharray="2 2" opacity=".55"/></svg>`};
 const C=[
 {l:'Player',g:p=>p.name,r:(p,i)=>`<div class="who"><span class="no">${i+1}</span>${logo(p.team)}<div><div class="n">${sn(p.name)}</div><div class="mu">${p.gp} games</div></div></div>`},
-{l:'Line',c:'gt',r:p=>`<input class="ln${!typed(p)&&p.line!=null?' auto':''}" inputmode="decimal" placeholder="–" value="${lv(p)}" oninput="this.classList.remove('auto');ln(${p.id},this.value)" onchange="if(!this.value.trim())draw()">`},
-{l:'Over',c:'gt',r:p=>`<span id="s${p.id}"></span>`},
-{l:'Over L5',c:'gt',r:p=>`<span id="t${p.id}"></span>`},
-{l:'Lean',c:'gt',r:p=>`<span id="l${p.id}"></span>`},
 {l:'Avg',c:'ga',g:p=>p.avg,r:p=>`<span class="av2">${f(p.avg)}</span>`},
 {l:'L5',c:'gf',g:p=>p.l5,r:p=>f(p.l5)},
 {l:'Last 5',c:'gf',r:spark},
 {l:'Floor 90',c:'gl',g:p=>p.f90,r:p=>p.f90},{l:'Floor 80',c:'gl',g:p=>p.f80,r:p=>p.f80},
+{l:'Line',c:'gt',r:p=>`<input class="ln${!typed(p)&&p.line!=null?' auto':''}" inputmode="decimal" placeholder="–" value="${lv(p)}" oninput="this.classList.remove('auto');ln(${p.id},this.value)" onchange="if(!this.value.trim())draw()">`},
+{l:'Over',c:'gt',r:p=>`<span id="s${p.id}"></span>`},
+{l:'Over L5',c:'gt',r:p=>`<span id="t${p.id}"></span>`},
+{l:'Lean',c:'gt',r:p=>`<span id="l${p.id}"></span>`},
 {l:'Min',c:'gm',g:p=>p.min,r:p=>f(p.min)},
 {l:'Next',c:'gn',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> <b>${p.next.opp}</b>`:'–'},
 {l:'Date',c:'gn',g:p=>p.next&&(p.next.utc||p.next.date),r:p=>p.next?glab(p.next):'–'},
@@ -202,30 +203,42 @@ let a=base.filter(p=>p.gp>=mg),fill=0;
 if(a.length<N&&!q&&!TM){fill=Math.min(N-a.length,base.length-a.length);a=a.concat(base.filter(p=>p.gp<mg).slice(0,fill)).sort((x,y)=>y.avg-x.avg)}
 a=a.slice(0,N);
 const g=C[S.k].g;a.sort((x,y)=>{const u=g(x),v=g(y);if(u==null)return 1;if(v==null)return-1;return(u>v?1:u<v?-1:0)*S.d});
+VIS=a.map(p=>p.id);
 $('b').innerHTML=a.map((p,r)=>{try{return '<tr>'+C.map((c,i)=>`<td class="${c.c||''}"${i==0?` onclick="det(${p.id})" title="Click for details"`:''}>${c.r(p,r)}</td>`).join('')+'</tr>'}catch(e){console.log(e);return ''}}).join('');
 a.forEach(res);$('em').textContent=a.length?(fill?'Only '+(a.length-fill)+' players have '+mg+'+ games, so '+fill+' players with fewer games were added to fill the list.':''):(TD?'No players with a game today in the data. The data was last updated '+et(D.updated)+'.':'No players match.')}
-function det(id){const p=D.players.find(x=>x.id==id),l=parseFloat(lv(p)),G=p.games,has=!isNaN(l),mx=Math.max(...G.map(x=>x.pra),has?l:0)*1.12,W=340,H=140,bw=W/G.length;
+function det(id){
+const p=D.players.find(x=>x.id==id),G=p.games,l=parseFloat(lv(p)),has=!isNaN(l),nx=p.next,o=O(p);
+const mx=Math.max(...G.map(x=>x.pra),has?l:0)*1.12,W=340,H=140,bw=W/G.length;
 const bars=G.map((x,i)=>`<rect x="${i*bw+3}" y="${H-x.pra/mx*H}" width="${bw-6}" height="${x.pra/mx*H}" rx="4" fill="${has?(x.pra>l?'var(--up)':'var(--dn)'):'var(--a)'}"/><text x="${i*bw+bw/2}" y="${Math.max(10,H-x.pra/mx*H-3)}" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--fg)">${x.pra}</text>`).join('');
 const ly=has?`<line x1="0" x2="${W}" y1="${H-l/mx*H}" y2="${H-l/mx*H}" stroke="var(--fg)" stroke-width="1.5" stroke-dasharray="4 3"/><text x="${W-2}" y="${Math.max(10,H-l/mx*H-4)}" text-anchor="end" font-size="9.5" font-weight="700" fill="var(--fg)">line ${l}</text>`:'';
-const ls=has?lean(p,l):null;const tl=(a,b,c)=>`<div class="tl" style="--c:var(${c})"><div>${a}</div><div>${b}</div></div>`,sb=s=>s?f(s.avg)+' ('+s.n+')':'n/a';
-$('sh').innerHTML=`<div class="hd"><div><b>${p.name}</b><div style="opacity:.9">${p.team}, ${p.gp} games${p.line_book?', line from '+p.line_book+(p.line_books>1?' (+'+(p.line_books-1)+' more books)':''):''}</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">
-<div class="g">${tl('Std dev',f(p.sd),'--a')}${tl('Low to high',p.mn+' to '+p.mx,'--a')}${tl('L5 minutes',f(p.l5min),'--m')}${tl('Home avg',f(p.home),'--t')}${tl('Away avg',f(p.away),'--t')}${tl('Back-to-back',sb(p.b2b),'--f')}${tl('2+ days rest',sb(p.r2),'--f')}${tl('Floor 90',p.f90,'--l')}${tl('Floor 80',p.f80,'--l')}</div>
-${lb(ls,l)}
-<svg viewBox="0 0 ${W} ${H}" width="100%">${bars}${ly}</svg><div class="mu" style="margin:4px 0 12px">Last ${G.length} games, oldest to newest${has?'. Dashed line is your line, '+l:''}</div>
+const av=k=>G.reduce((s,x)=>s+x[k],0)/G.length,ov=a=>{const c=a.filter(v=>v>l).length;return Math.round(100*c/a.length)+'% ('+c+' of '+a.length+')'};
+const vi=VIS.indexOf(id),pv=vi>0?VIS[vi-1]:null,nt=(vi>=0&&vi<VIS.length-1)?VIS[vi+1]:null,tr5=p.l5-p.avg;
+const tl=(a,b,c)=>`<div class="tl" style="--c:var(${c})"><div>${a}</div><div>${b}</div></div>`,sb=s=>s?f(s.avg)+' ('+s.n+' games)':'n/a',sec=t=>`<div class="hh">${t}</div>`;
+const ng=nx?`<div class="hp" style="--c:var(--n)"><b>Next game: ${nx.home?'home vs':'away at'} ${nx.opp}, ${glab(nx)}${nx.utc?' ET':''}</b>${o?`<span>${nx.opp} gives up ${f(o.allowed)} PRA per game to opposing players, #${o.rank} of 30 (#1 gives up the most).</span>`:''}</div>`:'';
+const lineBox=`<div class="hp" style="--c:var(--t)"><b>Line</b><span><input class="ln${!typed(p)&&p.line!=null?' auto':''}" inputmode="decimal" placeholder="–" value="${lv(p)}" onchange="ln(${id},this.value);det(${id})"> ${typed(p)?'typed by you':(p.line_book?'from '+p.line_book+(p.line_books>1?' (+'+(p.line_books-1)+' more book)':''):'')}<br>${has?'Went over this line: season '+ov(p.pra)+'; last 10 '+ov(p.pra.slice(-10))+'; last 5 '+ov(p.pra.slice(-5)):'Type a line to see how often he went over it.'}</span></div>`;
+$('sh').innerHTML=`<div class="hd"><div style="display:flex;align-items:center;gap:10px">${logo(p.team)}<div><b>${p.name}</b><div style="opacity:.9">${p.team}, ${p.gp} games played</div></div></div><div style="display:flex;gap:6px">${pv?`<button class="x" onclick="det(${pv})" title="Previous player in the list">‹</button>`:''}${nt?`<button class="x" onclick="det(${nt})" title="Next player in the list">›</button>`:''}<button class="x" onclick="$('o').style.display='none'" title="Close">✕</button></div></div><div class="bd">
+${ng}${lineBox}${lb(has?lean(p,l):null,l)}
+${sec('Averages')}<div class="g">${tl('Season avg',f(p.avg),'--a')}${tl('Median',f(p.med),'--a')}${tl('Last 10 avg',f(p.l10),'--f')}${tl('Last 5 avg',f(p.l5)+' ('+(tr5>=0?'+':'')+f(tr5)+')','--f')}${tl('Minutes',f(p.min),'--m')}${tl('Last 5 minutes',f(p.l5min),'--m')}</div>
+${sec('Floors (the PRA he reached in at least X% of games)')}<div class="g">${tl('Floor 90',p.f90+' (bets: '+r5(p.f90)+')','--up')}${tl('Floor 80',p.f80+' (bets: '+r5(p.f80)+')','--a')}${tl('Floor 70',p.f70,'--l')}</div>
+${sec('Consistency and splits')}<div class="g">${tl('Std dev',f(p.sd),'--a')}${tl('Low to high',p.mn+' to '+p.mx,'--a')}${tl('PRA per minute',f(p.avg/p.min,2),'--m')}${tl('Home avg',f(p.home),'--t')}${tl('Away avg',f(p.away),'--t')}${tl('Back-to-back',sb(p.b2b),'--f')}${tl('2+ days rest',sb(p.r2),'--f')}</div>
+${sec('Where it comes from (last '+G.length+' games)')}<div class="g">${tl('Points',f(av('p')),'--a')}${tl('Rebounds',f(av('r')),'--t')}${tl('Assists',f(av('a')),'--f')}</div>
+${sec('PRA by game')}<svg viewBox="0 0 ${W} ${H}" width="100%">${bars}${ly}</svg><div class="mu" style="margin:4px 0 12px">Last ${G.length} games, oldest to newest.${has?' Green bars beat your line ('+l+'), red bars did not.':' Type a line above to color the bars.'}</div>
 <table><tr><th>Date</th><th>Opp</th><th>Min</th><th>PTS</th><th>REB</th><th>AST</th><th>PRA</th></tr>`+
-[...G].reverse().map(x=>`<tr><td>${x.d.slice(5)}</td><td>${x.h?'vs':'@'} ${x.o}</td><td>${x.m}</td><td>${x.p}</td><td>${x.r}</td><td>${x.a}</td><td><b>${x.pra}</b></td></tr>`).join('')+'</table></div>';
-$('o').style.display='flex'}
+[...G].reverse().map(x=>`<tr><td>${x.d.slice(5)}</td><td>${x.h?'vs':'@'} ${x.o}</td><td>${x.m}</td><td>${x.p}</td><td>${x.r}</td><td>${x.a}</td><td><b class="${has?(x.pra>l?'up':'dn'):''}">${x.pra}</b></td></tr>`).join('')+'</table></div>';
+$('sh').scrollTop=0;$('o').style.display='flex'}
 function help(){
-const I=[['--t','Player','Rank number, a colored team badge, short name and games played. Tap the name for details: last 15 games, a chart with your line, std dev, home and away averages, back-to-back and rested averages, last 5 minutes, floors and the Lean breakdown.'],
-['--t','Line, Over, Over L5','Type the sportsbook line for a player (for example 38.5). Lines fill in automatically (dashed box) when a free PropLine key is set up in your repo. Over is how often he went over it this season, and Over L5 how often in his last 5 games (60% there means 3 of his last 5). Green is 60% or more, red is 40% or less. Your lines are saved on your phone.'],
-['--t','Lean (my suggestion)','Shows Over or Under once you type a line, or - when it is too close to call. I estimate his PRA from a mix of his season, last 10 and last 5 averages, adjusted for his minutes trend, the opponent, a back-to-back and home or away. I compare that with your line using how much he normally swings (std dev) and how often he went over this line. I only say Over when my estimate, his season average and his last 5 average are all clearly above the line, he went over it in more than half his games, he has 12 or more games, his scoring is steady, his minutes are not dropping, and the line is close to his average (a line far from his average usually means the books know something, such as an injury). Under is the reverse. It does not know about injuries or lineup changes. Tap a name to see how I got it.'],
-['--a','Avg','His mean PRA over the games he played this season.'],
-['--f','L5 and Last 5 bars','L5 is his average over the last 5 games. The small bars show each of those games: green at or above his season average, red below, dashed line is the average.'],
+const I=[['--t','Player','Rank number, team logo, short name and games played. Click or tap the name to open the player page. Rows light up when you hover over them.'],
+['--a','Avg','His mean PRA (points + rebounds + assists) over the games he played this season.'],
+['--f','L5 and Last 5','L5 is his average over the last 5 games. The small bars show each of those games: green at or above his season average, red below, and the dashed line is the season average.'],
 ['--l','Floor 90 and Floor 80','The PRA he reached or beat in at least 90% or 80% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
-['--m','Minutes','His average minutes this season. More minutes usually means more PRA. Tap a name to see his last 5 minutes. If they dropped, recent numbers may overstate what he will do.'],
+['--t','Line, Over, Over L5','Line: type the sportsbook line (for example 38.5). It fills in automatically from DraftKings, or FanDuel if DraftKings has none, when a PropLine key is set up in your repo. A dashed box is an automatic line, and anything you type replaces it. Over: how often he went over the line this season. Over L5: how often in his last 5 games (60% there means 3 of 5). Green is 60% or more, red is 40% or less.'],
+['--t','Lean (my suggestion)','Shows Over or Under once there is a line, or - when it is too close to call. I estimate his PRA from his season, last 10 and last 5 averages, adjusted for his minutes trend, the opponent, a back-to-back and home or away, and compare that with the line using how much he normally swings. I only say Over when my estimate, his season average and his last 5 average are all clearly above the line, he went over it in 60% or more of his games, he has 12 or more games, his scoring is steady, his minutes are not dropping, and the line is close to his average (a line far from his average usually means the books know something, such as an injury). Under is the reverse. It does not know about injuries or lineup changes. Open the player page to see how I got it.'],
+['--m','Min','His average minutes this season. More minutes usually means more PRA.'],
 ['--n','Next, Date, Allowed','Next is who he plays next (vs is home, @ is away). Date is when, with tip-off time in Eastern time. Allowed is how many PRA that team gives up per game to all opposing players, with its rank: #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
-['--l','Bets tab','Lists the games for today and tomorrow that have not started yet (a game disappears when it tips off). Each game starts with its Over and Under lean picks (same rule as the Lean column, using the line from PropLine or the one you typed), then each team\'s players with their Floor 90 and Floor 80 rounded down to the nearest 5, for example 42 becomes 40 and 39 becomes 35, minimum 10. Players whose Floor 90 is below 10 are left out. Use the day buttons to switch between days. It is a quick list of the safest past-performance levels, not a prediction.'],
-['--a','Search, team, Today, Top, Min GP','Search a player by name. The team list marks teams with a game today with 🏀. Today shows only players whose team plays today (Eastern date). Top is how many rows to show, Min GP hides players below that many games played. If fewer than Top players qualify, players with fewer games are added to fill the list. Tap a column header to sort, tap again to reverse.']];
+['--a','Search, Teams, Today, Top, Min GP','Search a player by name. The Teams list marks teams with a game today with a basketball. Today shows only players whose team plays today (Eastern date). Top is how many rows to show and Min GP hides players below that many games played. If fewer than Top players qualify, players with fewer games are added to fill the list. Click a column header to sort, click again to reverse.'],
+['--l','Bets tab','Shows the games for today and tomorrow that have not started (a game disappears at tip-off). Each game starts with its Over and Under lean picks (same rule as the Lean column, using the line from DraftKings or FanDuel or the one you typed). Then each team lists its players with their Floor 90 (green) and Floor 80 (orange) rounded down to the nearest 5, for example 42 becomes 40 and 39 becomes 35, minimum 10. Players whose Floor 90 is below 10 are left out.'],
+['--f','Player page','Opens when you click a name. At the top, the arrows move to the previous or next player in the list you were looking at, and the cross closes it (the Escape key works too). Next game shows the opponent, the date and how much that team gives up. Line: type or change the line here and everything on the page updates. Under it is how often he went over it this season, in the last 10 and in the last 5. Lean explains every step of my suggestion. Averages cover season, median, last 10, last 5 and minutes. Floors show his real Floor 90, 80 and 70 and the rounded number for bets. Consistency and splits show how much he swings (std dev), his low and high, PRA per minute, home and away averages, and back-to-back and rested averages (n/a if fewer than 5 games). Where it comes from splits his last 15 games into points, rebounds and assists. The chart shows each game with the value on top, and the table lists the last 15 games with PRA in green or red against your line.'],
+['--n','Staying up to date','The data refreshes every hour on the hour (Eastern time, GitHub can be a few minutes late). The page checks for new data when you reopen it and every 5 minutes, so you do not need to close the app. The Updated time at the top shows when the data was last built. When the page itself is changed, close and reopen the app once.']];
 $('sh').innerHTML=`<div class="hd"><div><b>How to read this</b><div style="opacity:.9">Past stats, step by step</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">`+
 I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</span></div>`).join('')+
 `<div class="hh">A quick routine</div><div class="hp" style="--c:var(--up)"><span>1. Type the line. 2. Check Over and Over L5. 3. Compare the line with his floors. 4. Check form (L5, bars) and minutes. 5. Check the opponent rank. 6. Check injury and lineup news elsewhere, because this page does not have it and it often matters most.</span></div>
@@ -256,6 +269,6 @@ const t=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
 if(!D||d.updated!==D.updated||t!==TODAY)apply(d,!D)}).catch(e=>{if(!D)$('se').textContent='No data yet ('+e+')'}).then(()=>{busy=false})}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 window.addEventListener('pageshow',refresh);window.addEventListener('focus',refresh);
-setInterval(refresh,300000);
+setInterval(refresh,300000);document.addEventListener('keydown',e=>{if(e.key=='Escape')$('o').style.display='none'});
 refresh();
 </script></body></html>
