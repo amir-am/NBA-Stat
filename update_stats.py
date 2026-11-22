@@ -332,7 +332,7 @@ def get_lines(now):
             best = pl.primary_lines(recs)
             if best:
                 print(f"PropLine: {len(recs)} lines from {len({r['book'] for r in recs})} books; {'; '.join(notes)}")
-                return best, "PropLine", status
+                return best, "PropLine (DraftKings, FanDuel)", status
             status.append("PropLine: no PRA lines returned (" + "; ".join(notes)[:150] + ")")
         except ImportError:
             status.append("propline_lines.py is missing from the repo (upload it next to update_stats.py)")
