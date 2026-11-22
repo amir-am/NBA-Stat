@@ -1,9 +1,9 @@
 name: Update NBA stats
 on:
   schedule:
-    # Hourly from 6:17 AM to 11:17 PM EST (UTC 11:17 to 04:17; one hour later on the clock in daylight saving time).
-    # The :17 minute avoids GitHub's busiest start time at the top of the hour.
-    - cron: "17 11-23,0-4 * * *"
+    # Every hour on the hour, 24 times a day (1:00 AM, 2:00 AM ... 12:00 AM Eastern).
+    # US Eastern is a whole number of hours from UTC, so the top of every UTC hour is also the top of an Eastern hour.
+    - cron: "0 * * * *"
   workflow_dispatch:
 permissions:
   contents: write
