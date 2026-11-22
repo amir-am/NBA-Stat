@@ -232,13 +232,30 @@ I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</
 <div class="hh">Keep in mind</div><div class="hp" style="--c:var(--dn)"><span>These are past results, not predictions. Sportsbooks already price in most of this. Early in the season the samples are small. At typical odds of -110 you need to win about 52.4% of bets just to break even, so a 60% hit rate over 5 games is not a proven edge. Only bet what you can afford to lose.</span></div><div class="hh">Your typed lines</div><div class="hp" style="--c:var(--t)"><span>Lines you type are saved on this phone and replace the automatic lines. Clear a single box to bring its automatic line back, or clear them all: <button class="chip" onclick="resetLines()">Clear my typed lines</button></span></div></div>`;
 $('o').style.display='flex'}
 setInterval(()=>{if(D&&$('v2').style.display!='none')bets()},60000);
-fetch('data.json?'+Date.now()).then(r=>r.json()).then(d=>{D=d;T=d.teams;$('se').textContent='NBA regular season '+d.season;
+const NOTE0=$('nt').textContent;
+function apply(d,first){
+D=d;T=d.teams;LM=null;
+$('se').textContent='NBA regular season '+d.season;
 $('ch').innerHTML=`<span>Updated ${et(d.updated)}</span>`;
-if(d.lines_source)$('nt').textContent+=' Lines are filled in automatically from '+d.lines_source+' ('+d.lines_count+' players). A dashed box is an automatic line. Type over it to change it; your typed lines are saved.';
-if(!d.lines_source&&d.lines_status){const b=$('lb');b.style.display='block';b.textContent='Automatic lines are not available: '+d.lines_status}
+$('nt').textContent=NOTE0+(d.lines_source?' Lines are filled in automatically from '+d.lines_source+' ('+d.lines_count+' players). A dashed box is an automatic line. Type over it to change it; your typed lines are saved.':'');
+const lb=$('lb');if(!d.lines_source&&d.lines_status){lb.style.display='block';lb.textContent='Automatic lines are not available: '+d.lines_status}else lb.style.display='none';
 TODAY=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
 const pt={};d.players.forEach(p=>{if(plays(p))pt[p.team]=1});
-const sel=$('tm');[...new Set(d.players.map(p=>p.team))].sort().forEach(t=>sel.add(new Option(t+(pt[t]?' 🏀':''),t)));
-sel.addEventListener('change',()=>{TM=sel.value;draw()});
-['tp','mg','q'].forEach(i=>$(i).addEventListener('input',draw));draw()}).catch(e=>{$('se').textContent='No data yet ('+e+')'});
+const sel=$('tm'),cur=sel.value;
+if(sel.options)while(sel.options.length>1)sel.remove(1);
+[...new Set(d.players.map(p=>p.team))].sort().forEach(t=>sel.add(new Option(t+(pt[t]?' 🏀':''),t)));
+sel.value=cur;
+if(first){sel.addEventListener('change',()=>{TM=sel.value;draw()});['tp','mg','q'].forEach(i=>$(i).addEventListener('input',draw))}
+draw();if($('v2').style.display!='none')bets()}
+let busy=false;
+function refresh(){
+if(busy)return;const a=document.activeElement;if(a&&a.classList&&a.classList.contains('ln'))return;
+busy=true;
+fetch('data.json?'+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(d=>{
+const t=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
+if(!D||d.updated!==D.updated||t!==TODAY)apply(d,!D)}).catch(e=>{if(!D)$('se').textContent='No data yet ('+e+')'}).then(()=>{busy=false})}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+window.addEventListener('pageshow',refresh);window.addEventListener('focus',refresh);
+setInterval(refresh,300000);
+refresh();
 </script></body></html>
