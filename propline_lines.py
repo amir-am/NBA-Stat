@@ -13,9 +13,8 @@ import argparse, datetime as dt, json, os, re, sys, time, unicodedata
 BASE = "https://api.prop-line.com/v1"
 SPORT = "basketball_nba"
 MARKET = "player_points_rebounds_assists"
-# Sportsbooks first (used to choose the single line shown on the page), then exchanges.
-PREFERRED = ["draftkings", "fanduel", "betmgm", "caesars", "fanatics", "hardrock", "betrivers", "bovada",
-             "betonlineag", "lowvig", "unibet", "thescorebet", "pinnacle", "novig", "prophetx", "kalshi", "polymarket"]
+PREFERRED = ["draftkings", "fanduel"]   # the only books used, in this order of preference
+ALLOWED_BOOKS = set(PREFERRED)
 DFS_BOOKS = {"prizepicks", "underdog", "sleeper", "dabble", "pick6"}  # pick'em apps: not two-way sportsbook prices
 
 
@@ -71,6 +70,8 @@ def parse_events(events, retrieved_at):
         eid = str(ev.get("id") or "")
         for bk in ev.get("bookmakers") or []:
             bkey = str(bk.get("key") or "").lower()
+            if bkey not in ALLOWED_BOOKS:
+                continue
             for m in bk.get("markets") or []:
                 if m.get("key") != MARKET or m.get("line_type") == "milestone":
                     continue
