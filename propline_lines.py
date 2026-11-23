@@ -150,7 +150,9 @@ def primary_lines(recs):
         for d, rows in days.items():
             r = min(rows, key=_rank)
             by[d] = {"line": r["line"], "book": r["book_title"], "books": len({x["book"] for x in rows}),
-                     "over_price": r["over_price"], "under_price": r["under_price"]}
+                     "over_price": r["over_price"], "under_price": r["under_price"],
+                     "per_book": {x["book"]: {"line": x["line"], "over_price": x["over_price"], "under_price": x["under_price"]}
+                                  for x in rows}}
         out[k] = dict(by[min(by)], by_date=by)
     return out
 
