@@ -1,9 +1,9 @@
 name: Update NBA stats
 on:
   schedule:
-    # Every hour on the hour, 24 times a day (1:00 AM, 2:00 AM ... 12:00 AM Eastern).
-    # US Eastern is a whole number of hours from UTC, so the top of every UTC hour is also the top of an Eastern hour.
-    - cron: "0 * * * *"
+    # Backup only: GitHub's own schedule is best-effort and often skips or delays runs.
+    # The reliable hourly trigger is an outside timer that calls workflow_dispatch (see the setup steps).
+    - cron: "30 * * * *"
   workflow_dispatch:
 permissions:
   contents: write
