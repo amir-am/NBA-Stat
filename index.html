@@ -126,7 +126,9 @@ const C=[
 {l:'Next',c:'gn',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> <b>${p.next.opp}</b>`:'–'},
 {l:'Date',c:'gn',g:p=>p.next&&(p.next.utc||p.next.date),r:p=>p.next?glab(p.next):'–'},
 {l:'Allowed',c:'gn',g:p=>O(p)&&O(p).allowed,r:p=>O(p)?`${f(O(p).allowed)} <span class="rk ${O(p).rank<=10?'up':O(p).rank>=21?'dn':''}">#${O(p).rank}</span>`:'–'}];
-let BD='';
+let BD='',BK='dk';try{BK=localStorage.getItem('bk')||'dk'}catch(e){}
+const BN={dk:'DraftKings',fd:'FanDuel'};
+function setBook(k){BK=k;try{localStorage.setItem('bk',k)}catch(e){}bets()}
 const r5=x=>Math.floor(x/5)*5;
 function tab(n){$('v1').style.display=n==1?'':'none';$('v2').style.display=n==2?'':'none';$('t1').classList.toggle('on',n==1);$('t2').classList.toggle('on',n==2);if(n==2)bets()}
 function setDay(d){BD=d;bets()}
@@ -135,8 +137,9 @@ if(D.schedule&&D.schedule.length)return D.schedule.map(g=>({date:g.date,utc:g.ut
 const m={};D.players.forEach(p=>{if(!p.next)return;const d=gday(p.next),h=p.next.home?p.team:p.next.opp,a=p.next.home?p.next.opp:p.team,k=d+h+a;m[k]=m[k]||{date:d,utc:p.next.utc,home:h,away:a}});
 return Object.values(m).sort((x,y)=>String(x.utc||x.date).localeCompare(String(y.utc||y.date)))}
 function lineFor(p,g){const u=L[p.id];if(u!==undefined&&u!==''){const v=parseFloat(u);if(!isNaN(v))return{l:v,src:'your line'}}
-const b=p.lines_by_date&&p.lines_by_date[g.date];if(b)return{l:b.line,src:b.book};
-if(p.line!=null&&p.next&&gday(p.next)==g.date)return{l:p.line,src:p.line_book||'auto'};return null}
+const b=p.lines_by_date&&p.lines_by_date[g.date];if(!b)return null;
+let v=b[BK];if(v===undefined&&b.dk===undefined&&b.fd===undefined&&b.line!=null&&b.book==BN[BK])v=b.line;
+return v!=null?{l:v,src:BN[BK]}:null}
 function picks(g){const o=[];[g.away,g.home].forEach(t=>D.players.filter(p=>p.team==t).forEach(p=>{const lf=lineFor(p,g);if(!lf)return;
 const r=lean(p,lf.l,{opp:t==g.home?g.away:g.home,home:t==g.home,utc:g.utc,date:g.date});if(r&&r.v!='Neither')o.push({p,t,l:lf.l,src:lf.src,r})}));
 return o.sort((a,b)=>Math.abs(b.r.p-.5)-Math.abs(a.r.p-.5))}
@@ -149,7 +152,8 @@ const rows=t=>{const a=D.players.filter(p=>p.team==t&&p.f90>=10).sort((x,y)=>r5(
 return a.length?a.map(p=>`<div class="pr"><div><div class="n">${sn(p.name)}</div><div class="mu">${p.gp} games, avg ${f(p.avg)}</div></div><div class="fr"><div class="fb">${r5(p.f90)}</div><div class="fb">${r5(p.f80)}</div></div></div>`).join(''):'<div class="pr"><span class="mu">No players with a Floor 90 of 10 or more</span></div>'};
 const pk=g=>{const a=picks(g);return`<div class="th2">Lean picks (${a.length})</div>`+(a.length?a.map(x=>`<div class="pr"><div><div class="n">${sn(x.p.name)}</div><div class="mu">${x.t}, line from ${x.src}</div></div><span class="ls ${lc(x.r.v)}">${x.r.v} ${x.l}</span></div>`).join(''):'<div class="pr"><span class="mu">No Over or Under picks for this game (or no lines yet)</span></div>')};
 const day=G.filter(g=>g.date==BD),tot=day.reduce((s,g)=>s+picks(g).length,0);
-$('v2').innerHTML='<div class="days">'+days.map(d=>`<button class="chip ${d==BD?'on':''}" onclick="setDay('${d}')">${lab(d)}</button>`).join('')+`</div><div class="note" style="padding:4px 16px 0"><b>${tot}</b> lean picks across ${day.length} games.</div>`+
+let elig=0,have=0;day.forEach(g=>[g.away,g.home].forEach(t=>D.players.filter(p=>p.team==t&&p.gp>=LGP).forEach(p=>{elig++;if(lineFor(p,g))have++})));
+$('v2').innerHTML='<div class="days">'+days.map(d=>`<button class="chip ${d==BD?'on':''}" onclick="setDay('${d}')">${lab(d)}</button>`).join('')+`</div><div class="days" style="padding-top:2px"><span class="mu" style="align-self:center">Lines from</span>${['dk','fd'].map(k=>`<button class="chip ${k==BK?'on':''}" onclick="setBook('${k}')">${BN[k]}</button>`).join('')}</div><div class="note" style="padding:4px 16px 0"><b>${tot}</b> lean picks across ${day.length} games, using ${BN[BK]} lines (or lines you typed).${have<elig?' '+(elig-have)+' of '+elig+' players have no '+BN[BK]+' line yet.':''}</div>`+
 day.map(g=>`<div class="gc"><div class="gh">${logo(g.away)}<span>${g.away} @ ${g.home}</span>${logo(g.home)}<span class="tp">${g.utc&&gtime(g)?gtime(g)+' ET':''}</span></div>${pk(g)}
 <div class="th2">${logo(g.away)} ${g.away}<span class="cl"><b>F90</b><b>F80</b></span></div>${rows(g.away)}<div class="th2">${logo(g.home)} ${g.home}<span class="cl"><b>F90</b><b>F80</b></span></div>${rows(g.home)}</div>`).join('')+
 '<div class="note">The two numbers by each player are his Floor 90 (F90) and Floor 80 (F80) rounded down to the nearest 5 (42 becomes 40, 39 becomes 35, minimum 10). Floor 90 is the PRA he reached or beat in at least 90% of his games, Floor 80 in at least 80%. Lean picks use the same rule as the Lean column, with the line from PropLine (or the line you typed). Past results, not predictions.</div>'}
@@ -158,7 +162,7 @@ function srt(i){S=S.k==i?{k:i,d:-S.d}:{k:i,d:(i==0||i==11||i==12)?1:-1};draw()}
 const dd=(a,b)=>Math.round((Date.parse(b+'T12:00Z')-Date.parse(a+'T12:00Z'))/864e5);
 const erf=x=>{const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+.3275911*x);return s*(1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-.284496736)*t+.254829592)*t*Math.exp(-x*x))};
 const cdf=z=>.5*(1+erf(z/Math.SQRT2));
-const LP=.64,LZ=.40,LH=.60,LGP=12,LCV=.30,LFAR=.75;
+const LP=.63,LZ=.37,LH=.58,LGP=12,LCV=.30,LFAR=.80;
 let LM=null;
 function lean(p,l,nx){const N=nx||p.next;
 if(isNaN(l))return null;
@@ -176,7 +180,7 @@ const ha=N.home?p.home:p.away;if(ha!=null)adj((N.home?'home':'away')+' avg '+f(h
 const pz=cdf((mu-l)/sd),over=p.pra.filter(v=>v>l).length,pe=(over+5)/(n+10),pr=.6*pz+.4*pe;
 w.push('Expected PRA '+f(mu)+' vs line '+l+', typical swing '+f(sd));
 w.push('History: over this line in '+over+' of '+n+' games ('+Math.round(100*over/n)+'%)');
-const gz=(mu-l)/sd,os=over/n;w.push('Rule: Over needs my estimate, his season avg and his last 5 avg all clearly above the line, over it in 60%+ of his games, a steady scorer, minutes not dropping and a line close to his average; Under is the reverse');
+const gz=(mu-l)/sd,os=over/n;w.push('Rule: Over needs my estimate, his season avg and his last 5 avg all clearly above the line, over it in 58%+ of his games, a steady scorer, minutes not dropping and a line close to his average; Under is the reverse');
 let v='Neither';
 if(pr>=LP&&p.avg>=l&&p.l5>=l&&gz>=LZ&&os>=LH)v='Over';else if(pr<=1-LP&&p.avg<=l&&p.l5<=l&&gz<=-LZ&&os<=1-LH)v='Under';
 if(v!='Neither'){const g=[],dm=p.l5min-p.min;
@@ -232,11 +236,11 @@ const I=[['--t','Player','Rank number, team logo, short name and games played. C
 ['--f','L5 and Last 5','L5 is his average over the last 5 games. The small bars show each of those games: green at or above his season average, red below, and the dashed line is the season average.'],
 ['--l','Floor 90 and Floor 80','The PRA he reached or beat in at least 90% or 80% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
 ['--t','Line, Over, Over L5','Line: type the sportsbook line (for example 38.5). It fills in automatically from DraftKings, or FanDuel if DraftKings has none, when a PropLine key is set up in your repo. A dashed box is an automatic line, and anything you type replaces it. Over: how often he went over the line this season. Over L5: how often in his last 5 games (60% there means 3 of 5). Green is 60% or more, red is 40% or less.'],
-['--t','Lean (my suggestion)','Shows Over or Under once there is a line, or - when it is too close to call. I estimate his PRA from his season, last 10 and last 5 averages, adjusted for his minutes trend, the opponent, a back-to-back and home or away, and compare that with the line using how much he normally swings. I only say Over when my estimate, his season average and his last 5 average are all clearly above the line, he went over it in 60% or more of his games, he has 12 or more games, his scoring is steady, his minutes are not dropping, and the line is close to his average (a line far from his average usually means the books know something, such as an injury). Under is the reverse. It does not know about injuries or lineup changes. Open the player page to see how I got it.'],
+['--t','Lean (my suggestion)','Shows Over or Under once there is a line, or - when it is too close to call. I estimate his PRA from his season, last 10 and last 5 averages, adjusted for his minutes trend, the opponent, a back-to-back and home or away, and compare that with the line using how much he normally swings. I only say Over when my estimate, his season average and his last 5 average are all clearly above the line, he went over it in 58% or more of his games, he has 12 or more games, his scoring is steady, his minutes are not dropping, and the line is close to his average (a line far from his average usually means the books know something, such as an injury). Under is the reverse. It does not know about injuries or lineup changes. Open the player page to see how I got it.'],
 ['--m','Min','His average minutes this season. More minutes usually means more PRA.'],
 ['--n','Next, Date, Allowed','Next is who he plays next (vs is home, @ is away). Date is when, with tip-off time in Eastern time. Allowed is how many PRA that team gives up per game to all opposing players, with its rank: #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
 ['--a','Search, Teams, Today, Top, Min GP','Search a player by name. The Teams list marks teams with a game today with a basketball. Today shows only players whose team plays today (Eastern date). Top is how many rows to show and Min GP hides players below that many games played. If fewer than Top players qualify, players with fewer games are added to fill the list. Click a column header to sort, click again to reverse.'],
-['--l','Bets tab','Shows the games for today and tomorrow that have not started (a game disappears at tip-off). Each game starts with its Over and Under lean picks (same rule as the Lean column, using the line from DraftKings or FanDuel or the one you typed). Then each team lists its players with their Floor 90 (green) and Floor 80 (orange) rounded down to the nearest 5, for example 42 becomes 40 and 39 becomes 35, minimum 10. Players whose Floor 90 is below 10 are left out.'],
+['--l','Bets tab','Shows the games for today and tomorrow that have not started (a game disappears at tip-off). Each game starts with its Over and Under lean picks (same rule as the Lean column). Choose DraftKings or FanDuel at the top and the picks are recalculated with that book\'s lines; a line you typed always wins. Players with no line from the chosen book are skipped. Then each team lists its players with their Floor 90 (green) and Floor 80 (orange) rounded down to the nearest 5, for example 42 becomes 40 and 39 becomes 35, minimum 10. Players whose Floor 90 is below 10 are left out.'],
 ['--f','Player page','Opens when you click a name. At the top, the arrows move to the previous or next player in the list you were looking at, and the cross closes it (the Escape key works too). Next game shows the opponent, the date and how much that team gives up. Line: type or change the line here and everything on the page updates. Under it is how often he went over it this season, in the last 10 and in the last 5. Lean explains every step of my suggestion. Averages cover season, median, last 10, last 5 and minutes. Floors show his real Floor 90, 80 and 70 and the rounded number for bets. Consistency and splits show how much he swings (std dev), his low and high, PRA per minute, home and away averages, and back-to-back and rested averages (n/a if fewer than 5 games). Where it comes from splits his last 15 games into points, rebounds and assists. The chart shows each game with the value on top, and the table lists the last 15 games with PRA in green or red against your line.'],
 ['--n','Staying up to date','The data refreshes every hour on the hour (Eastern time, GitHub can be a few minutes late). The page checks for new data when you reopen it and every 5 minutes, so you do not need to close the app. The Updated time at the top shows when the data was last built. When the page itself is changed, close and reopen the app once.']];
 $('sh').innerHTML=`<div class="hd"><div><b>How to read this</b><div style="opacity:.9">Past stats, step by step</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">`+
