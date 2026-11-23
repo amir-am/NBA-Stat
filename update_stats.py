@@ -459,7 +459,12 @@ def main():
                 if isinstance(v, dict):
                     p["line"], p["line_book"], p["line_books"] = v["line"], v["book"], v["books"]
                     if v.get("by_date"):
-                        p["lines_by_date"] = {d: {"line": x["line"], "book": x["book"]} for d, x in v["by_date"].items()}
+                        p["lines_by_date"] = {
+                            d: {k: val for k, val in {
+                                "line": x["line"], "book": x["book"],
+                                "dk": (x["per_book"].get("draftkings") or {}).get("line"),
+                                "fd": (x["per_book"].get("fanduel") or {}).get("line")}.items() if val is not None}
+                            for d, x in v["by_date"].items()}
                 else:
                     p["line"] = v
                 n += 1
