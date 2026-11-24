@@ -78,6 +78,7 @@ th{white-space:normal;line-height:1.2;vertical-align:bottom}th:first-child{text-
 .pc{min-width:0;padding:3px 7px}.ls{min-width:0;padding:3px 8px}.ln{width:54px}
 .fr .fb:first-child,.cl b:first-child{color:var(--up)}.fr .fb:last-child,.cl b:last-child{color:var(--a)}
 .hd .lg{background:#fff;border-radius:50%;padding:3px}.hd .x{font-size:20px;line-height:1}.bd .ln{margin-right:6px}
+.upd.old{opacity:1;font-weight:700}.upd.old span::before{background:#fbbf24}
 </style></head><body>
 <div class="hero"><div class="hg"><h1>PRA Props</h1><button class="hb" onclick="help()">? Help</button><div class="sea" id="se">Loading…</div><div class="upd" id="ch"></div></div><input id="q" placeholder="Search a player"></div>
 <div class="tabs"><button class="tab on" id="t1" onclick="tab(1)">Players</button><button class="tab" id="t2" onclick="tab(2)">Bets</button></div>
@@ -242,7 +243,7 @@ const I=[['--t','Player','Rank number, team logo, short name and games played. C
 ['--a','Search, Teams, Today, Top, Min GP','Search a player by name. The Teams list marks teams with a game today with a basketball. Today shows only players whose team plays today (Eastern date). Top is how many rows to show and Min GP hides players below that many games played. If fewer than Top players qualify, players with fewer games are added to fill the list. Click a column header to sort, click again to reverse.'],
 ['--l','Bets tab','Shows the games for today and tomorrow that have not started (a game disappears at tip-off). Each game starts with its Over and Under lean picks (same rule as the Lean column). Choose DraftKings or FanDuel at the top and the picks are recalculated with that book\'s lines; a line you typed always wins. Players with no line from the chosen book are skipped. Then each team lists its players with their Floor 90 (green) and Floor 80 (orange) rounded down to the nearest 5, for example 42 becomes 40 and 39 becomes 35, minimum 10. Players whose Floor 90 is below 10 are left out.'],
 ['--f','Player page','Opens when you click a name. At the top, the arrows move to the previous or next player in the list you were looking at, and the cross closes it (the Escape key works too). Next game shows the opponent, the date and how much that team gives up. Line: type or change the line here and everything on the page updates. Under it is how often he went over it this season, in the last 10 and in the last 5. Lean explains every step of my suggestion. Averages cover season, median, last 10, last 5 and minutes. Floors show his real Floor 90, 80 and 70 and the rounded number for bets. Consistency and splits show how much he swings (std dev), his low and high, PRA per minute, home and away averages, and back-to-back and rested averages (n/a if fewer than 5 games). Where it comes from splits his last 15 games into points, rebounds and assists. The chart shows each game with the value on top, and the table lists the last 15 games with PRA in green or red against your line.'],
-['--n','Staying up to date','The data refreshes every hour on the hour (Eastern time, GitHub can be a few minutes late). The page checks for new data when you reopen it and every 5 minutes, so you do not need to close the app. The Updated time at the top shows when the data was last built. When the page itself is changed, close and reopen the app once.']];
+['--n','Staying up to date','The Updated chip at the top shows when the data was last built and how long ago that was. Its dot is green normally and turns orange when the data is more than 2 hours old. The data only refreshes when the workflow runs: GitHub\'s own timer is unreliable, so an outside hourly timer (cron-job.org) is needed for a refresh every hour. The page checks for new data when you reopen it and every 5 minutes, so you do not need to close the app. When the page itself is changed, close and reopen the app once.']];
 $('sh').innerHTML=`<div class="hd"><div><b>How to read this</b><div style="opacity:.9">Past stats, step by step</div></div><button class="x" onclick="$('o').style.display='none'">✕</button></div><div class="bd">`+
 I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</span></div>`).join('')+
 `<div class="hh">A quick routine</div><div class="hp" style="--c:var(--up)"><span>1. Type the line. 2. Check Over and Over L5. 3. Compare the line with his floors. 4. Check form (L5, bars) and minutes. 5. Check the opponent rank. 6. Check injury and lineup news elsewhere, because this page does not have it and it often matters most.</span></div>
@@ -250,10 +251,15 @@ I.map(x=>`<div class="hp" style="--c:var(${x[0]})"><b>${x[1]}</b><span>${x[2]}</
 $('o').style.display='flex'}
 setInterval(()=>{if(D&&$('v2').style.display!='none')bets()},60000);
 const NOTE0=$('nt').textContent;
+let UP='';
+const upMin=()=>{const d=new Date(UP.replace(' UTC','Z').replace(' ','T'));return isNaN(d)?null:Math.max(0,Math.round((Date.now()-d)/60000))};
+function renderUpd(){const m=upMin();if(m==null)return;
+const ago=m<1?'just now':m<60?m+' min ago':Math.floor(m/60)+' h '+(m%60)+' min ago';
+$('ch').innerHTML=`<span>Updated ${et(UP)} (${ago})</span>`;$('ch').classList.toggle('old',m>120)}
 function apply(d,first){
 D=d;T=d.teams;LM=null;
 $('se').textContent='NBA regular season '+d.season;
-$('ch').innerHTML=`<span>Updated ${et(d.updated)}</span>`;
+UP=d.updated;renderUpd();
 $('nt').textContent=NOTE0+(d.lines_source?' Lines are filled in automatically from '+d.lines_source+' ('+d.lines_count+' players). A dashed box is an automatic line. Type over it to change it; your typed lines are saved.':'');
 const lb=$('lb');if(!d.lines_source&&d.lines_status){lb.style.display='block';lb.textContent='Automatic lines are not available: '+d.lines_status}else lb.style.display='none';
 TODAY=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
@@ -273,6 +279,6 @@ const t=new Date().toLocaleDateString('en-CA',{timeZone:'America/New_York'});
 if(!D||d.updated!==D.updated||t!==TODAY)apply(d,!D)}).catch(e=>{if(!D)$('se').textContent='No data yet ('+e+')'}).then(()=>{busy=false})}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 window.addEventListener('pageshow',refresh);window.addEventListener('focus',refresh);
-setInterval(refresh,300000);document.addEventListener('keydown',e=>{if(e.key=='Escape')$('o').style.display='none'});
+setInterval(refresh,300000);setInterval(()=>{if(UP)renderUpd()},60000);document.addEventListener('keydown',e=>{if(e.key=='Escape')$('o').style.display='none'});
 refresh();
 </script></body></html>
