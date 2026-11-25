@@ -79,6 +79,16 @@ th{white-space:normal;line-height:1.2;vertical-align:bottom}th:first-child{text-
 .fr .fb:first-child,.cl b:first-child{color:var(--up)}.fr .fb:last-child,.cl b:last-child{color:var(--a)}
 .hd .lg{background:#fff;border-radius:50%;padding:3px}.hd .x{font-size:20px;line-height:1}.bd .ln{margin-right:6px}
 .upd.old{opacity:1;font-weight:700}.upd.old span::before{background:#fbbf24}
+.bt{margin:12px;padding:16px;background:var(--card);border-radius:22px;box-shadow:0 10px 30px var(--sh)}
+.bth{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.btt{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.btg{background:linear-gradient(135deg,#c026d3,#ff7a18);color:#fff;font-weight:700;font-size:13px;padding:6px 12px;border-radius:99px}
+.cl2{font-size:12px;font-weight:600;color:var(--mu);margin:10px 2px 5px}
+.seg{display:flex;gap:2px;background:var(--sub);border-radius:13px;padding:3px}
+.seg button{flex:1;border:0;background:transparent;border-radius:10px;padding:9px 8px;font:inherit;font-weight:700;color:var(--mu)}
+.seg button.on{background:var(--card);color:var(--fg);box-shadow:0 1px 5px rgba(0,0,0,.2)}.seg button:not(.on):hover{color:var(--m)}
+.stats{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px;margin-top:14px}
+.st{background:var(--sub);border-radius:14px;padding:10px 6px;text-align:center}.st b{display:block;font-size:24px;font-weight:800;line-height:1.1}.st b small{font-size:14px;color:var(--mu);font-weight:600}.st span{font-size:11px;color:var(--mu)}
+.bth2{margin-top:10px;font-size:12px}
 </style></head><body>
 <div class="hero"><div class="hg"><h1>PRA Props</h1><button class="hb" onclick="help()">? Help</button><div class="sea" id="se">Loading…</div><div class="upd" id="ch"></div></div><input id="q" placeholder="Search a player"></div>
 <div class="tabs"><button class="tab on" id="t1" onclick="tab(1)">Players</button><button class="tab" id="t2" onclick="tab(2)">Bets</button></div>
@@ -151,11 +161,17 @@ if(!days.includes(BD))BD=days.includes(TODAY)?TODAY:days[0];
 const lab=d=>d==TODAY?'Today':d==tmw?'Tomorrow':new Date(d+'T12:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'short',month:'short',day:'numeric'});
 const rows=t=>{const a=D.players.filter(p=>p.team==t&&p.f90>=10).sort((x,y)=>r5(y.f90)-r5(x.f90)||r5(y.f80)-r5(x.f80)||y.avg-x.avg);
 return a.length?a.map(p=>`<div class="pr"><div><div class="n">${sn(p.name)}</div><div class="mu">${p.gp} games, avg ${f(p.avg)}</div></div><div class="fr"><div class="fb">${r5(p.f90)}</div><div class="fb">${r5(p.f80)}</div></div></div>`).join(''):'<div class="pr"><span class="mu">No players with a Floor 90 of 10 or more</span></div>'};
-const pk=g=>{const a=picks(g);return`<div class="th2">Lean picks (${a.length})</div>`+(a.length?a.map(x=>`<div class="pr"><div><div class="n">${sn(x.p.name)}</div><div class="mu">${x.t}, line from ${x.src}</div></div><span class="ls ${lc(x.r.v)}">${x.r.v} ${x.l}</span></div>`).join(''):'<div class="pr"><span class="mu">No Over or Under picks for this game (or no lines yet)</span></div>')};
-const day=G.filter(g=>g.date==BD),tot=day.reduce((s,g)=>s+picks(g).length,0);
+const pk=a=>{return`<div class="th2">Lean picks (${a.length})</div>`+(a.length?a.map(x=>`<div class="pr"><div><div class="n">${sn(x.p.name)}</div><div class="mu">${x.t}, line from ${x.src}</div></div><span class="ls ${lc(x.r.v)}">${x.r.v} ${x.l}</span></div>`).join(''):'<div class="pr"><span class="mu">No Over or Under picks for this game (or no lines yet)</span></div>')};
+const day=G.filter(g=>g.date==BD),PG=day.map(g=>picks(g)),all=PG.flat(),nO=all.filter(x=>x.r.v=='Over').length,nU=all.length-nO;
 let elig=0,have=0;day.forEach(g=>[g.away,g.home].forEach(t=>D.players.filter(p=>p.team==t&&p.gp>=LGP).forEach(p=>{elig++;if(lineFor(p,g))have++})));
-$('v2').innerHTML='<div class="days">'+days.map(d=>`<button class="chip ${d==BD?'on':''}" onclick="setDay('${d}')">${lab(d)}</button>`).join('')+`</div><div class="days" style="padding-top:2px"><span class="mu" style="align-self:center">Lines from</span>${['dk','fd'].map(k=>`<button class="chip ${k==BK?'on':''}" onclick="setBook('${k}')">${BN[k]}</button>`).join('')}</div><div class="note" style="padding:4px 16px 0"><b>${tot}</b> lean picks across ${day.length} games, using ${BN[BK]} lines (or lines you typed).${have<elig?' '+(elig-have)+' of '+elig+' players have no '+BN[BK]+' line yet.':''}</div>`+
-day.map(g=>`<div class="gc"><div class="gh">${logo(g.away)}<span>${g.away} @ ${g.home}</span>${logo(g.home)}<span class="tp">${g.utc&&gtime(g)?gtime(g)+' ET':''}</span></div>${pk(g)}
+const seg=(items,cur,fn)=>'<div class="seg">'+items.map(([k,t])=>`<button class="${k==cur?'on':''}" onclick="${fn}('${k}')">${t}</button>`).join('')+'</div>';
+const full=new Date(BD+'T12:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'long',month:'long',day:'numeric'});
+const head=`<div class="bt"><div class="bth"><div><div class="btt">${lab(BD)}</div><div class="mu">${full}</div></div><div class="btg">${day.length} game${day.length==1?'':'s'}</div></div>
+<div class="cl2">Day</div>${seg(days.map(d=>[d,lab(d)]),BD,'setDay')}
+<div class="cl2">Lines from</div>${seg([['dk','DraftKings'],['fd','FanDuel']],BK,'setBook')}
+<div class="stats"><div class="st"><b class="up">${nO}</b><span>Over picks</span></div><div class="st"><b class="dn">${nU}</b><span>Under picks</span></div><div class="st"><b>${have}<small>/${elig}</small></b><span>players with a ${BN[BK]} line</span></div></div>
+<div class="mu bth2">Picks use ${BN[BK]} lines and are recalculated when you switch. A line you typed always wins.${have<elig?' Players without a line are skipped.':''}</div></div>`;
+$('v2').innerHTML=head+day.map((g,i)=>`<div class="gc"><div class="gh">${logo(g.away)}<span>${g.away} @ ${g.home}</span>${logo(g.home)}<span class="tp">${g.utc&&gtime(g)?gtime(g)+' ET':''}</span></div>${pk(PG[i])}
 <div class="th2">${logo(g.away)} ${g.away}<span class="cl"><b>F90</b><b>F80</b></span></div>${rows(g.away)}<div class="th2">${logo(g.home)} ${g.home}<span class="cl"><b>F90</b><b>F80</b></span></div>${rows(g.home)}</div>`).join('')+
 '<div class="note">The two numbers by each player are his Floor 90 (F90) and Floor 80 (F80) rounded down to the nearest 5 (42 becomes 40, 39 becomes 35, minimum 10). Floor 90 is the PRA he reached or beat in at least 90% of his games, Floor 80 in at least 80%. Lean picks use the same rule as the Lean column, with the line from PropLine (or the line you typed). Past results, not predictions.</div>'}
 function today(){TD=!TD;$('td').classList.toggle('on',TD);draw()}
