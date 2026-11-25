@@ -303,8 +303,9 @@ def fetch_sdv(now):
 
 def fetch_next(now):
     games = []
+    today = dt.date.fromisoformat(et_iso(now.strftime("%Y-%m-%dT%H:%M:%SZ")))   # ESPN's scoreboard days are US Eastern
     for n in range(8):
-        d = now.date() + dt.timedelta(n)
+        d = today + dt.timedelta(n)
         try:
             evs = getj(f"{ESPN}scoreboard?dates={d:%Y%m%d}", 2).get("events", [])
         except Exception as ex:
