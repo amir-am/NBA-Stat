@@ -116,6 +116,60 @@ def num(x):
         return 0.0
 
 
+def espn_rows(j, eid, ld, h, aw):
+    """ESPN game summary -> one row per player who played (same layout as the other sources)."""
+    rows = []
+    for tm in j["boxscore"]["players"]:
+        tab = tm["team"]["abbreviation"]
+        tab = FIX.get(tab, tab)
+        home = tab == h
+        mu = f"{tab} vs. {aw}" if home else f"{tab} @ {h}"
+        for grp in tm["statistics"]:
+            lab = grp["labels"]
+            ix = {k: lab.index(k) for k in ("MIN", "PTS", "REB", "AST")}
+            for at in grp["athletes"]:
+                st_ = at.get("stats") or []
+                if not st_ or at.get("didNotPlay"):
+                    continue
+                rows.append(dict(PLAYER_ID=int(at["athlete"]["id"]), PLAYER_NAME=at["athlete"]["displayName"],
+                                 TEAM_ABBREVIATION=tab, GAME_ID="002" + str(eid), GAME_DATE=ld, MATCHUP=mu,
+                                 MIN=num(st_[ix["MIN"]]), PTS=int(num(st_[ix["PTS"]])),
+                                 REB=int(num(st_[ix["REB"]])), AST=int(num(st_[ix["AST"]]))))
+    return rows
+
+
+def fill_recent(rows, now, days=3):
+    """The SportsDataverse file can trail real games by hours or more. Add finished games that ESPN already
+    lists but the file does not have yet. Returns (extra rows, number of games added)."""
+    have = {r["GAME_ID"] for r in rows}
+    today = dt.date.fromisoformat(et_iso(now.strftime("%Y-%m-%dT%H:%M:%SZ")))
+    extra, added = [], 0
+    for n in range(days + 1):
+        d = today - dt.timedelta(days=n)
+        try:
+            events = getj(f"{ESPN}scoreboard?dates={d:%Y%m%d}", 2).get("events", [])
+        except Exception as ex:
+            print("recent scoreboard", d, "failed:", ex, file=sys.stderr)
+            continue
+        for e in events:
+            eid = str(e.get("id"))
+            try:
+                if e.get("season", {}).get("type") != 2 or not e["status"]["type"]["completed"] or "002" + eid in have:
+                    continue
+                c = e["competitions"][0]["competitors"]
+                side = {x["homeAway"]: FIX.get(x["team"]["abbreviation"], x["team"]["abbreviation"]) for x in c}
+                got = espn_rows(getj(f"{ESPN}summary?event={eid}", 3), eid, et_iso(e["date"]), side["home"], side["away"])
+            except Exception as ex:
+                print("recent game", eid, "failed:", ex, file=sys.stderr)
+                continue
+            if got:
+                extra += got
+                have.add("002" + eid)
+                added += 1
+    print(f"recent games added from ESPN: {added}", file=sys.stderr)
+    return extra, added
+
+
 def fetch_espn(now, path="espn_cache.json", budget=720):
     from concurrent.futures import ThreadPoolExecutor
     y = int(season_str(now)[:4])
@@ -162,25 +216,7 @@ def fetch_espn(now, path="espn_cache.json", budget=720):
         if time.time() > end:
             return eid, None
         try:
-            j = getj(f"{ESPN}summary?event={eid}", 3)
-            rows = []
-            for tm in j["boxscore"]["players"]:
-                tab = tm["team"]["abbreviation"]
-                tab = FIX.get(tab, tab)
-                home = tab == h
-                mu = f"{tab} vs. {aw}" if home else f"{tab} @ {h}"
-                for grp in tm["statistics"]:
-                    lab = grp["labels"]
-                    ix = {k: lab.index(k) for k in ("MIN", "PTS", "REB", "AST")}
-                    for at in grp["athletes"]:
-                        st_ = at.get("stats") or []
-                        if not st_ or at.get("didNotPlay"):
-                            continue
-                        rows.append(dict(PLAYER_ID=int(at["athlete"]["id"]), PLAYER_NAME=at["athlete"]["displayName"],
-                                         TEAM_ABBREVIATION=tab, GAME_ID="002" + eid, GAME_DATE=ld, MATCHUP=mu,
-                                         MIN=num(st_[ix["MIN"]]), PTS=int(num(st_[ix["PTS"]])),
-                                         REB=int(num(st_[ix["REB"]])), AST=int(num(st_[ix["AST"]]))))
-            return eid, rows
+            return eid, espn_rows(getj(f"{ESPN}summary?event={eid}", 3), eid, ld, h, aw)
         except Exception as ex:
             print("game", eid, "failed:", ex, file=sys.stderr)
             return eid, None
@@ -232,8 +268,8 @@ def parse_sdv(text):
         if str(g(d, "did_not_play") or "").upper() in ("TRUE", "T", "1"):
             continue
         mins = num(g(d, "minutes"))
-        pid, gid = g(d, "athlete_id"), g(d, "game_id")
-        if mins <= 0 or not pid or (gid, pid) in seen:
+        pid, gid = g(d, "athlete_id"), re.sub(r"\.0+$", "", str(g(d, "game_id") or ""))
+        if mins <= 0 or not pid or not gid or (gid, pid) in seen:
             continue
         seen.add((gid, pid))
         tm = fx(g(d, "team_abbreviation"))
@@ -421,11 +457,16 @@ def build(rows, sched, season, now):
 def main():
     now = dt.datetime.now(dt.timezone.utc)
     season = season_str(now)
-    sched, rows = {}, []
+    sched, rows, recent_added = {}, [], 0
     try:
         rows = fetch_sdv(now)
         if rows:
             sched = fetch_next(now)
+            try:
+                extra, recent_added = fill_recent(rows, now)
+                rows += extra
+            except Exception as e:
+                print("recent-games fill failed:", e, file=sys.stderr)
     except Exception as e:
         print("SportsDataverse route failed:", e, file=sys.stderr)
     if not rows:
@@ -447,6 +488,7 @@ def main():
     if not rows:
         sys.exit("ERROR: no game data yet for " + season + "; data.json left unchanged")
     out = build(rows, sched, season, now)
+    out["recent_games_added"] = recent_added
     try:
         lines, src, status = get_lines(now)
     except Exception as e:
