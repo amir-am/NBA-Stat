@@ -89,6 +89,9 @@ th{white-space:normal;line-height:1.2;vertical-align:bottom}th:first-child{text-
 .stats{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px;margin-top:14px}
 .st{background:var(--sub);border-radius:14px;padding:10px 6px;text-align:center}.st b{display:block;font-size:24px;font-weight:800;line-height:1.1}.st b small{font-size:14px;color:var(--mu);font-weight:600}.st span{font-size:11px;color:var(--mu)}
 .bth2{margin-top:10px;font-size:12px}
+.st{border:0;font:inherit;color:inherit}.st:disabled{opacity:.55}.st.click{cursor:pointer}.st.click:hover{box-shadow:0 0 0 2px var(--m) inset}.st.on{box-shadow:0 0 0 2px var(--m) inset;background:var(--card)}
+.x2{margin-left:auto;font:inherit;font-weight:700;font-size:12px;border:1px solid var(--bd);background:var(--sub);color:var(--fg);border-radius:99px;padding:5px 12px}
+.pr .who{gap:10px}
 </style></head><body>
 <div class="hero"><div class="hg"><h1>PRA Props</h1><button class="hb" onclick="help()">? Help</button><div class="sea" id="se">Loading…</div><div class="upd" id="ch"></div></div><input id="q" placeholder="Search a player"></div>
 <div class="tabs"><button class="tab on" id="t1" onclick="tab(1)">Players</button><button class="tab" id="t2" onclick="tab(2)">Bets</button></div>
@@ -137,8 +140,9 @@ const C=[
 {l:'Next',c:'gn',g:p=>p.next&&p.next.opp,r:p=>p.next?`<span class="mu">${p.next.home?'vs':'@'}</span> <b>${p.next.opp}</b>`:'–'},
 {l:'Date',c:'gn',g:p=>p.next&&(p.next.utc||p.next.date),r:p=>p.next?glab(p.next):'–'},
 {l:'Allowed',c:'gn',g:p=>O(p)&&O(p).allowed,r:p=>O(p)?`${f(O(p).allowed)} <span class="rk ${O(p).rank<=10?'up':O(p).rank>=21?'dn':''}">#${O(p).rank}</span>`:'–'}];
-let BD='',BK='dk';try{BK=localStorage.getItem('bk')||'dk'}catch(e){}
+let BD='',BK='dk',PK='';try{BK=localStorage.getItem('bk')||'dk'}catch(e){}
 const BN={dk:'DraftKings',fd:'FanDuel'};
+function setPk(v){PK=PK==v?'':v;bets()}
 function setBook(k){BK=k;try{localStorage.setItem('bk',k)}catch(e){}bets()}
 const r5=x=>Math.floor(x/5)*5;
 function tab(n){$('v1').style.display=n==1?'':'none';$('v2').style.display=n==2?'':'none';$('t1').classList.toggle('on',n==1);$('t2').classList.toggle('on',n==2);if(n==2)bets()}
@@ -162,16 +166,19 @@ const lab=d=>d==TODAY?'Today':d==tmw?'Tomorrow':new Date(d+'T12:00Z').toLocaleDa
 const rows=t=>{const a=D.players.filter(p=>p.team==t&&p.f90>=10).sort((x,y)=>r5(y.f90)-r5(x.f90)||r5(y.f80)-r5(x.f80)||y.avg-x.avg);
 return a.length?a.map(p=>`<div class="pr"><div><div class="n">${sn(p.name)}</div><div class="mu">${p.gp} games, avg ${f(p.avg)}</div></div><div class="fr"><div class="fb">${r5(p.f90)}</div><div class="fb">${r5(p.f80)}</div></div></div>`).join(''):'<div class="pr"><span class="mu">No players with a Floor 90 of 10 or more</span></div>'};
 const pk=a=>{return`<div class="th2">Lean picks (${a.length})</div>`+(a.length?a.map(x=>`<div class="pr"><div><div class="n">${sn(x.p.name)}</div><div class="mu">${x.t}, line from ${x.src}</div></div><span class="ls ${lc(x.r.v)}">${x.r.v} ${x.l}</span></div>`).join(''):'<div class="pr"><span class="mu">No Over or Under picks for this game (or no lines yet)</span></div>')};
-const day=G.filter(g=>g.date==BD),PG=day.map(g=>picks(g)),all=PG.flat(),nO=all.filter(x=>x.r.v=='Over').length,nU=all.length-nO;
+const day=G.filter(g=>g.date==BD),PG=day.map(g=>picks(g)),all=PG.flatMap((a,i)=>a.map(x=>Object.assign({g:day[i]},x))),nO=all.filter(x=>x.r.v=='Over').length,nU=all.length-nO;
+if((PK=='Over'&&!nO)||(PK=='Under'&&!nU))PK='';
 let elig=0,have=0;day.forEach(g=>[g.away,g.home].forEach(t=>D.players.filter(p=>p.team==t&&p.gp>=LGP).forEach(p=>{elig++;if(lineFor(p,g))have++})));
 const seg=(items,cur,fn)=>'<div class="seg">'+items.map(([k,t])=>`<button class="${k==cur?'on':''}" onclick="${fn}('${k}')">${t}</button>`).join('')+'</div>';
 const full=new Date(BD+'T12:00Z').toLocaleDateString('en-US',{timeZone:'UTC',weekday:'long',month:'long',day:'numeric'});
 const head=`<div class="bt"><div class="bth"><div><div class="btt">${lab(BD)}</div><div class="mu">${full}</div></div><div class="btg">${day.length} game${day.length==1?'':'s'}</div></div>
 <div class="cl2">Day</div>${seg(days.map(d=>[d,lab(d)]),BD,'setDay')}
 <div class="cl2">Lines from</div>${seg([['dk','DraftKings'],['fd','FanDuel']],BK,'setBook')}
-<div class="stats"><div class="st"><b class="up">${nO}</b><span>Over picks</span></div><div class="st"><b class="dn">${nU}</b><span>Under picks</span></div><div class="st"><b>${have}<small>/${elig}</small></b><span>players with a ${BN[BK]} line</span></div></div>
-<div class="mu bth2">Picks use ${BN[BK]} lines and are recalculated when you switch. A line you typed always wins.${have<elig?' Players without a line are skipped.':''}</div></div>`;
-$('v2').innerHTML=head+day.map((g,i)=>`<div class="gc"><div class="gh">${logo(g.away)}<span>${g.away} @ ${g.home}</span>${logo(g.home)}<span class="tp">${g.utc&&gtime(g)?gtime(g)+' ET':''}</span></div>${pk(PG[i])}
+<div class="stats"><button class="st ${nO?'click':''} ${PK=='Over'?'on':''}" ${nO?`onclick="setPk('Over')"`:'disabled'}><b class="up">${nO}</b><span>Over picks</span></button><button class="st ${nU?'click':''} ${PK=='Under'?'on':''}" ${nU?`onclick="setPk('Under')"`:'disabled'}><b class="dn">${nU}</b><span>Under picks</span></button><div class="st"><b>${have}<small>/${elig}</small></b><span>players with a ${BN[BK]} line</span></div></div>
+<div class="mu bth2">${nO+nU?'Tap Over or Under to list those picks. ':''}Picks use ${BN[BK]} lines and are recalculated when you switch. A line you typed always wins.${have<elig?' Players without a line are skipped.':''}</div></div>`;
+const list=PK?all.filter(x=>x.r.v==PK).map(x=>`<div class="pr"><div class="who">${logo(x.t)}<div><div class="n">${sn(x.p.name)}</div><div class="mu">${x.g.away} @ ${x.g.home}${x.g.utc&&gtime(x.g)?', '+gtime(x.g)+' ET':''}</div></div></div><div style="text-align:right"><span class="ls ${lc(x.r.v)}">${x.r.v} ${x.l}</span><div class="mu">${x.src}</div></div></div>`).join(''):'';
+const panel=PK?`<div class="gc"><div class="gh"><span>${PK} picks, strongest first</span><button class="x2" onclick="setPk('')">Close</button></div>${list}</div>`:'';
+$('v2').innerHTML=head+panel+day.map((g,i)=>`<div class="gc"><div class="gh">${logo(g.away)}<span>${g.away} @ ${g.home}</span>${logo(g.home)}<span class="tp">${g.utc&&gtime(g)?gtime(g)+' ET':''}</span></div>${pk(PG[i])}
 <div class="th2">${logo(g.away)} ${g.away}<span class="cl"><b>F90</b><b>F80</b></span></div>${rows(g.away)}<div class="th2">${logo(g.home)} ${g.home}<span class="cl"><b>F90</b><b>F80</b></span></div>${rows(g.home)}</div>`).join('')+
 '<div class="note">The two numbers by each player are his Floor 90 (F90) and Floor 80 (F80) rounded down to the nearest 5 (42 becomes 40, 39 becomes 35, minimum 10). Floor 90 is the PRA he reached or beat in at least 90% of his games, Floor 80 in at least 80%. Lean picks use the same rule as the Lean column, with the line from PropLine (or the line you typed). Past results, not predictions.</div>'}
 function today(){TD=!TD;$('td').classList.toggle('on',TD);draw()}
@@ -253,7 +260,7 @@ const I=[['--t','Player','Rank number, team logo, short name and games played. C
 ['--f','L5 and Last 5','L5 is his average over the last 5 games. The small bars show each of those games: green at or above his season average, red below, and the dashed line is the season average.'],
 ['--l','Floor 90 and Floor 80','The PRA he reached or beat in at least 90% or 80% of his games. If your line is below his Floor 80, he cleared it in 80% or more of games. If your line is above his Avg, he usually falls short of it.'],
 ['--t','Line, Over, Over L5','Line: type the sportsbook line (for example 38.5). It fills in automatically from DraftKings, or FanDuel if DraftKings has none, when a PropLine key is set up in your repo. A dashed box is an automatic line, and anything you type replaces it. Over: how often he went over the line this season. Over L5: how often in his last 5 games (60% there means 3 of 5). Green is 60% or more, red is 40% or less.'],
-['--t','Lean (my suggestion)','Shows Over or Under once there is a line, or - when it is too close to call. I estimate his PRA from his season, last 10 and last 5 averages, adjusted for his minutes trend, the opponent, a back-to-back and home or away, and compare that with the line using how much he normally swings. I only say Over when my estimate, his season average and his last 5 average are all clearly above the line, he went over it in 58% or more of his games, he has 12 or more games, his scoring is steady, his minutes are not dropping, and the line is close to his average (a line far from his average usually means the books know something, such as an injury). Under is the reverse. It does not know about injuries or lineup changes. Open the player page to see how I got it.'],
+['--t','Lean (my suggestion)','Shows Over or Under once there is a line, or - when it is too close to call. I estimate his PRA from his season, last 10 and last 5 averages, adjusted for his minutes trend, the opponent, a back-to-back and home or away, and compare that with the line using how much he normally swings. The numbers: Over needs my combined chance to be 63% or more (Under 37% or less), my estimate at least 0.37 typical swings (std dev) beyond the line, and the line within 0.8 swings of his average. I only say Over when my estimate, his season average and his last 5 average are all clearly above the line, he went over it in 58% or more of his games, he has 12 or more games, his scoring is steady, his minutes are not dropping, and the line is close to his average (a line far from his average usually means the books know something, such as an injury). Under is the reverse. It does not know about injuries or lineup changes. Open the player page to see how I got it.'],
 ['--m','Min','His average minutes this season. More minutes usually means more PRA.'],
 ['--n','Next, Date, Allowed','Next is who he plays next (vs is home, @ is away). Date is when, with tip-off time in Eastern time. Allowed is how many PRA that team gives up per game to all opposing players, with its rank: #1 gives up the most (green, 1 to 10), #30 the least (red, 21 to 30). It covers the whole team, not one position.'],
 ['--a','Search, Teams, Today, Top, Min GP','Search a player by name. The Teams list marks teams with a game today with a basketball. Today shows only players whose team plays today (Eastern date). Top is how many rows to show and Min GP hides players below that many games played. If fewer than Top players qualify, players with fewer games are added to fill the list. Click a column header to sort, click again to reverse.'],
@@ -270,8 +277,8 @@ const NOTE0=$('nt').textContent;
 let UP='';
 const upMin=()=>{const d=new Date(UP.replace(' UTC','Z').replace(' ','T'));return isNaN(d)?null:Math.max(0,Math.round((Date.now()-d)/60000))};
 function renderUpd(){const m=upMin();if(m==null)return;
-const ago=m<1?'just now':m<60?m+' min ago':Math.floor(m/60)+' h '+(m%60)+' min ago';
-$('ch').innerHTML=`<span>Updated ${et(UP)} (${ago})</span>`;$('ch').classList.toggle('old',m>120)}
+const ago=m<1?'just now':m<180?m+' min ago':Math.floor(m/60)+' h ago';
+$('ch').innerHTML=`<span>Updated ${ago}</span>`;$('ch').classList.toggle('old',m>120)}
 function apply(d,first){
 D=d;T=d.teams;LM=null;
 $('se').textContent='NBA regular season '+d.season;
