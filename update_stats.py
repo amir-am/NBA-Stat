@@ -301,6 +301,24 @@ def fetch_sdv(now):
     return parse_sdv(retry(go, 3))
 
 
+NEXT_FAILED = []   # Eastern dates whose ESPN schedule lookup failed on this run
+
+
+def keep_old_schedule(out, failed, path="data.json"):
+    """If ESPN failed for a day, keep that day's games from the previous data.json so Today and Tomorrow never vanish."""
+    if not failed:
+        return 0
+    try:
+        old = json.load(open(path)).get("schedule", [])
+    except Exception:
+        return 0
+    have = {(g["date"], g["home"], g["away"]) for g in out.get("schedule", [])}
+    keep = [g for g in old if g.get("date") in failed and (g["date"], g["home"], g["away"]) not in have]
+    out["schedule"] = sorted(out.get("schedule", []) + keep, key=lambda x: x["utc"])
+    print(f"kept {len(keep)} games from the previous schedule for days that failed to load", file=sys.stderr)
+    return len(keep)
+
+
 def fetch_next(now):
     games = []
     today = dt.date.fromisoformat(et_iso(now.strftime("%Y-%m-%dT%H:%M:%SZ")))   # ESPN's scoreboard days are US Eastern
@@ -310,6 +328,7 @@ def fetch_next(now):
             evs = getj(f"{ESPN}scoreboard?dates={d:%Y%m%d}", 2).get("events", [])
         except Exception as ex:
             print("next-game lookup failed:", d, ex, file=sys.stderr)
+            NEXT_FAILED.append(d.isoformat())
             continue
         for e in evs:
             if e.get("season", {}).get("type") != 2 or e["status"]["type"]["completed"]:
@@ -490,6 +509,7 @@ def main():
         sys.exit("ERROR: no game data yet for " + season + "; data.json left unchanged")
     out = build(rows, sched, season, now)
     out["recent_games_added"] = recent_added
+    keep_old_schedule(out, set(NEXT_FAILED))
     try:
         lines, src, status = get_lines(now)
     except Exception as e:
